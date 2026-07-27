@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseGeocodingResults, pickPlaceName } from './geocoding';
+import { parseGeocodingResults, pickPhotonName, pickPlaceName } from './geocoding';
 
 describe('parseGeocodingResults', () => {
   it('prevedie výsledky na lokality vrátane kraja a štátu', () => {
@@ -54,5 +54,25 @@ describe('pickPlaceName', () => {
     expect(pickPlaceName({ city: '   ' })).toBeNull();
     expect(pickPlaceName({})).toBeNull();
     expect(pickPlaceName(null)).toBeNull();
+  });
+});
+
+describe('pickPhotonName', () => {
+  it('vezme jméno z prvního prvku GeoJSON', () => {
+    expect(
+      pickPhotonName({ features: [{ properties: { name: 'Děčín', country: 'Česko' } }] }),
+    ).toBe('Děčín');
+  });
+
+  it('město má přednost před názvem objektu', () => {
+    expect(pickPhotonName({ features: [{ properties: { name: 'Zámek', city: 'Děčín' } }] })).toBe(
+      'Děčín',
+    );
+  });
+
+  it('prázdná odpověď nedá jméno', () => {
+    expect(pickPhotonName({ features: [] })).toBeNull();
+    expect(pickPhotonName({})).toBeNull();
+    expect(pickPhotonName(null)).toBeNull();
   });
 });

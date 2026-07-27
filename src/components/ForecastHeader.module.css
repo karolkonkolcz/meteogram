@@ -8,17 +8,21 @@
 }
 
 .identity {
+  flex: 1 1 12rem;
   min-width: 0;
 }
 
 .meta,
 .run {
+  min-width: 0;
   overflow-wrap: anywhere;
 }
 
 .locationButton {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
+  max-width: 100%;
   gap: var(--space-2);
   padding: 0;
   background: none;
@@ -30,6 +34,7 @@
 .name {
   font-size: var(--text-lg);
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .change {

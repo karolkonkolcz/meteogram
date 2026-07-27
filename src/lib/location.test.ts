@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addRecent,
+  isCoordinateName,
   isSameLocation,
   locationToParams,
   parseLocationFromParams,
@@ -77,5 +78,19 @@ describe('isSameLocation', () => {
   it('toleruje zaokrouhlení na ~10 m', () => {
     expect(isSameLocation(LUBOVNA, { ...LUBOVNA, latitude: 49.27601 })).toBe(true);
     expect(isSameLocation(LUBOVNA, { ...LUBOVNA, latitude: 49.3 })).toBe(false);
+  });
+});
+
+describe('isCoordinateName', () => {
+  it('pozná lokalitu pojmenovanou souřadnicemi', () => {
+    expect(isCoordinateName('50.651, 14.003')).toBe(true);
+    expect(isCoordinateName('-33.9, 151.2')).toBe(true);
+    expect(isCoordinateName(' 49.276, 20.683 ')).toBe(true);
+  });
+
+  it('skutečné jméno místa nechá být', () => {
+    expect(isCoordinateName('Nová Ľubovňa')).toBe(false);
+    expect(isCoordinateName('Praha 6')).toBe(false);
+    expect(isCoordinateName('50.651')).toBe(false);
   });
 });

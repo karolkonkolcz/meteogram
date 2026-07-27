@@ -8,6 +8,17 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/*
+ * Stránka se nikdy nesmí roztáhnout do šířky. Bez tohohle stačí jediný
+ * prvek, který se odmítne zúžit (Safari vykresluje písmo šířeji než
+ * ostatní prohlížeče), a obsah u pravého okraje se usekne.
+ */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   background: var(--plane);

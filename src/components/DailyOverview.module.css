@@ -9,7 +9,7 @@
 
 .row {
   display: grid;
-  grid-template-columns: 3.4em 1fr auto;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
@@ -30,13 +30,14 @@
 }
 
 .day {
+  white-space: nowrap;
   font-size: var(--text-sm);
   color: var(--ink-secondary);
 }
 
 .temperatures {
   display: grid;
-  grid-template-columns: 2.4em 1fr 2.4em;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
   align-items: center;
   gap: var(--space-2);
   font-size: var(--text-sm);
@@ -44,12 +45,14 @@
 
 .min {
   text-align: right;
+  white-space: nowrap;
   color: var(--ink-secondary);
 }
 
 .max {
   color: var(--ink);
   font-weight: 600;
+  white-space: nowrap;
 }
 
 /* Pruh na společném měřítku: až porovnání dnů mezi sebou dá číslům smysl. */
@@ -68,11 +71,13 @@
   background: var(--temp);
 }
 
+/* Hodnoty se raději zalomí, než aby roztáhly řádek přes okraj displeje. */
 .extras {
   display: flex;
-  gap: var(--space-2);
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
   justify-content: flex-end;
-  min-width: 7.5em;
+  min-width: 0;
   font-size: var(--text-xs);
 }
 

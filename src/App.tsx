@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CurrentConditions } from './components/CurrentConditions';
 import { DailyOverview } from './components/DailyOverview';
 import { ForecastHeader } from './components/ForecastHeader';
@@ -10,7 +10,9 @@ import { useElevation, useForecast } from './hooks/useForecast';
 import { useLocationState } from './hooks/useLocationState';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useSettings } from './settings/SettingsContext';
+import { reverseGeocode } from './api/geocoding';
 import { applyElevationCorrection } from './lib/correction';
+import { isCoordinateName } from './lib/location';
 import { applyWindUnit } from './lib/units';
 import styles from './App.module.css';
 
@@ -19,7 +21,7 @@ export function App() {
   // Na telefonu je hlavní pohled denní přehled; graf po hodinách je až
   // druhá otázka a vyžadoval by vodorovné tažení hned na úvod.
   const compact = useMediaQuery('(max-width: 599px)');
-  const { location, recent, setLocation } = useLocationState();
+  const { location, recent, setLocation, renameCurrent } = useLocationState();
   const [searchOpen, setSearchOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   // Graf i tabulka jsou drahé (stovky prvků). Ve sbalené sekci by se
@@ -28,6 +30,29 @@ export function App() {
   const [tableOpen, setTableOpen] = useState(false);
   const forecast = useForecast(location);
   const elevation = useElevation(location);
+
+  /**
+   * Lokalita z GPS se mohla uložit jen jako souřadnice – buď proto, že
+   * reverzní geokódování tehdy selhalo, nebo pochází ze starší verze.
+   * Jméno se proto zkusí doplnit i dodatečně, jednou na dané souřadnice.
+   */
+  const renameAttempts = useRef(new Set<string>());
+  useEffect(() => {
+    if (!isCoordinateName(location.name)) return;
+    const key = `${location.latitude},${location.longitude}`;
+    if (renameAttempts.current.has(key)) return;
+    renameAttempts.current.add(key);
+
+    let cancelled = false;
+    reverseGeocode(location.latitude, location.longitude, settings.locale)
+      .then((name) => {
+        if (!cancelled && name) renameCurrent(name);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [location.name, location.latitude, location.longitude, settings.locale, renameCurrent]);
 
   /**
    * Nastavení se promítne do dat jednou, tady. Panely, bublina i tabulka

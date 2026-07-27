@@ -58,6 +58,14 @@ export function locationToParams(location: Location): URLSearchParams {
   return params;
 }
 
+/**
+ * Pozná lokalitu pojmenovanou souřadnicemi. Takové jméno vzniká, když
+ * reverzní geokódování selže – při dalším spuštění se zkusí znovu.
+ */
+export function isCoordinateName(name: string): boolean {
+  return /^-?\d{1,3}(\.\d+)?,\s*-?\d{1,3}(\.\d+)?$/.test(name.trim());
+}
+
 export function formatCoordinates(latitude: number, longitude: number): string {
   return `${round(latitude, 3)}, ${round(longitude, 3)}`;
 }

@@ -74,16 +74,30 @@ export async function fetchElevation(
   return Array.isArray(elevation) && typeof elevation[0] === 'number' ? elevation[0] : null;
 }
 
-const REVERSE_URL = 'https://api.bigdatacloud.net/data/reverse-geocode-client';
+const BIG_DATA_CLOUD_URL = 'https://api.bigdatacloud.net/data/reverse-geocode-client';
+const PHOTON_URL = 'https://photon.komoot.io/reverse';
+const REVERSE_TIMEOUT_MS = 5000;
 
 /**
  * Ze souřadnic GPS udělá jméno místa. Open-Meteo umí jen hledání podle
- * názvu, reverzní směr ne – proto jiný poskytovatel (bez klíče, s CORS).
+ * názvu, reverzní směr ne – proto cizí poskytovatelé (bez klíče, s CORS).
  *
- * Selhání není chyba: volající pak lokalitu pojmenuje souřadnicemi,
- * jako dosud. Kvůli tomu se také nečeká déle než pár sekund.
+ * Zkoušejí se dva za sebou: ani jeden není smluvní závazek a oba můžou
+ * kdykoli přestat odpovídat. Když selžou oba, volající lokalitu pojmenuje
+ * souřadnicemi jako dosud – jméno je doplněk, ne podmínka.
  */
 export async function reverseGeocode(
+  latitude: number,
+  longitude: number,
+  language: 'sk' | 'cs',
+): Promise<string | null> {
+  return (
+    (await fromBigDataCloud(latitude, longitude, language)) ??
+    (await fromPhoton(latitude, longitude))
+  );
+}
+
+async function fromBigDataCloud(
   latitude: number,
   longitude: number,
   language: 'sk' | 'cs',
@@ -93,26 +107,45 @@ export async function reverseGeocode(
     longitude: String(longitude),
     localityLanguage: language,
   });
+  return requestName(`${BIG_DATA_CLOUD_URL}?${params.toString()}`, pickPlaceName);
+}
 
+async function fromPhoton(latitude: number, longitude: number): Promise<string | null> {
+  const params = new URLSearchParams({ lat: String(latitude), lon: String(longitude) });
+  return requestName(`${PHOTON_URL}?${params.toString()}`, pickPhotonName);
+}
+
+async function requestName(
+  url: string,
+  pick: (payload: unknown) => string | null,
+): Promise<string | null> {
   try {
-    const response = await fetch(`${REVERSE_URL}?${params.toString()}`, {
-      signal: AbortSignal.timeout(5000),
-    });
+    const response = await fetch(url, { signal: AbortSignal.timeout(REVERSE_TIMEOUT_MS) });
     if (!response.ok) return null;
-    return pickPlaceName(await response.json());
+    return pick(await response.json());
   } catch {
     return null;
   }
 }
 
-/** Z odpovědi se bere nejkonkrétnější název, který dává smysl ukázat. */
-export function pickPlaceName(payload: unknown): string | null {
-  const data = asRecord(payload);
-  if (!data) return null;
-
-  for (const key of ['city', 'locality', 'principalSubdivision'] as const) {
-    const value = data[key];
+function firstNonEmpty(source: Record<string, unknown>, keys: readonly string[]): string | null {
+  for (const key of keys) {
+    const value = source[key];
     if (typeof value === 'string' && value.trim() !== '') return value.trim();
   }
   return null;
+}
+
+/** Z odpovědi se bere nejkonkrétnější název, který dává smysl ukázat. */
+export function pickPlaceName(payload: unknown): string | null {
+  const data = asRecord(payload);
+  return data ? firstNonEmpty(data, ['city', 'locality', 'principalSubdivision']) : null;
+}
+
+/** Photon vrací GeoJSON – jméno je ve vlastnostech prvního prvku. */
+export function pickPhotonName(payload: unknown): string | null {
+  const features = asRecord(payload)?.features;
+  if (!Array.isArray(features)) return null;
+  const properties = asRecord(asRecord(features[0])?.properties);
+  return properties ? firstNonEmpty(properties, ['city', 'name', 'county', 'state']) : null;
 }

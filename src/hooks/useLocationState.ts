@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   DEFAULT_LOCATION,
   addRecent,
+  isSameLocation,
   locationToParams,
   parseLocationFromParams,
   readRecent,
@@ -23,6 +24,7 @@ export function useLocationState(): {
   location: Location;
   recent: Location[];
   setLocation: (next: Location) => void;
+  renameCurrent: (name: string) => void;
 } {
   const [location, setLocationState] = useState<Location>(initialLocation);
   const [recent, setRecent] = useState<Location[]>(readRecent);
@@ -46,5 +48,25 @@ export function useLocationState(): {
     window.history.pushState({}, '', `?${locationToParams(next).toString()}`);
   }, []);
 
-  return { location, recent, setLocation };
+  /**
+   * Doplnění jména k téže lokalitě. Nahrazuje záznam v historii, ne
+   * přidává – tlačítko zpět nemá vracet k bezejmenné variantě téhož místa.
+   */
+  const renameCurrent = useCallback((name: string) => {
+    setLocationState((current) => {
+      if (current.name === name) return current;
+      const renamed = { ...current, name };
+      setRecent((list) => {
+        const updated = list.map((item) =>
+          isSameLocation(item, renamed) ? { ...item, name } : item,
+        );
+        storeRecent(updated);
+        return updated;
+      });
+      window.history.replaceState({}, '', `?${locationToParams(renamed).toString()}`);
+      return renamed;
+    });
+  }, []);
+
+  return { location, recent, setLocation, renameCurrent };
 }

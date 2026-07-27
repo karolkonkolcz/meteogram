@@ -4,7 +4,20 @@ Webová aplikace, která reprodukuje klasický meteogram SHMÚ/ECMWF, ale
 interaktivně, na 16 dní, s výběrem lokality, meteorologickými výstrahami
 a srážkovým radarem. Hostováno na Netlify.
 
-Stav dokumentu: **návrh k odsouhlasení** – zatím se nepíše žádný kód.
+Stav dokumentu: **návrh odsouhlasen** (rozhodnutí zadavatele viz §0) –
+zatím se nepíše žádný kód.
+
+---
+
+## 0. Odsouhlasená rozhodnutí
+
+| # | Otázka           | Rozhodnutí                                                    |
+| - | ---------------- | ------------------------------------------------------------- |
+| 1 | Vzhled           | **moderní redesign se zachovaným rozvržením** – pořadí a sdílená osa panelů jako v předloze, vlastní vizuální jazyk (§3.0) |
+| 2 | Jazyk            | **SK primárně, CS jako druhý**; EN mimo rozsah                 |
+| 3 | Zařízení         | **device-aware** – layout se přizpůsobuje třídě zařízení a schopnostem vstupu, ne jen šířce okna (§3.6) |
+| 4 | Model            | **ECMWF (`ecmwf_ifs025`) napevno jako výchozí** kvůli shodě s předlohou; přepínač modelů až ve fázi 2 |
+| 5 | Rozsah MVP       | **jen meteogram** + výběr lokality. Výstrahy a radar jsou fáze 2, architektura na ně zůstává připravená |
 
 ---
 
@@ -13,18 +26,19 @@ Stav dokumentu: **návrh k odsouhlasení** – zatím se nepíše žádný kód.
 Vzít statický obrázek meteogramu (viz referenční předloha SHMÚ – ECMWF,
 `+240 h`) a udělat z něj živou aplikaci:
 
-| Předloha (SHMÚ)                  | Nová aplikace                                        |
-| -------------------------------- | ---------------------------------------------------- |
-| statický PNG, jedna obec         | interaktivní SVG, libovolné místo na světě            |
-| 10 dní (240 h)                   | 16 dní (384 h)                                        |
-| pevný model ECMWF                | volitelný model (best match / ECMWF / ICON / GFS)     |
-| bez výstrah                      | panel meteorologických výstrah pro danou lokalitu     |
-| bez radaru                       | animovaný srážkový radar + nowcast                    |
-| desktop only                     | responzivní, PWA, instalovatelné na mobil             |
+| Předloha (SHMÚ)                  | Nová aplikace                                     | Fáze |
+| -------------------------------- | -------------------------------------------------- | ---- |
+| statický PNG, jedna obec         | interaktivní SVG, libovolné místo na světě          | MVP  |
+| 10 dní (240 h)                   | 16 dní (384 h)                                      | MVP  |
+| pevný model ECMWF                | ECMWF zachován; přepínač modelů později             | MVP  |
+| desktop only                     | device-aware, PWA, instalovatelné na mobil          | MVP  |
+| bez výstrah                      | panel meteorologických výstrah pro danou lokalitu   | 2    |
+| bez radaru                       | animovaný srážkový radar + nowcast                  | 2    |
 
-Nejde o pixel-perfect klon; jde o zachování **informační hustoty** a
-sledu panelů, s modernější typografií, tmavým režimem a interaktivitou
-(hover/tap → přesné hodnoty pro daný časový krok).
+Nejde o pixel-perfect klon: **rozvržení zůstává** (stejné pořadí panelů,
+jedna sdílená časová osa, stejná informační hustota), **vizuál je nový**
+(typografie, barvy, tmavý režim, interaktivita – hover/tap → přesné
+hodnoty pro daný časový krok).
 
 ---
 
@@ -36,11 +50,19 @@ Vše je zvoleno tak, aby MVP běželo **bez placených API a bez API klíčů**.
 
 - Endpoint: `https://api.open-meteo.com/v1/forecast`
 - Bez registrace a klíče, `forecast_days=16`, hodinový krok.
-- Volba modelu parametrem `models=`:
-  - `best_match` (default – Open-Meteo míchá modely podle lokality),
-  - `ecmwf_ifs025` – nejbližší předloze SHMÚ,
-  - `icon_seamless` – nejlepší rozlišení pro střední Evropu,
-  - `gfs_seamless` – záloha.
+- **Model: `models=ecmwf_ifs025`** – shoda s předlohou SHMÚ (rozhodnutí 4).
+  Datová vrstva ale model bere jako parametr, ne jako konstantu, aby
+  přepínač (`icon_seamless`, `gfs_seamless`, `best_match`) šel ve fázi 2
+  přidat bez zásahu do komponent.
+- Dopady volby ECMWF, se kterými je třeba počítat:
+  - IFS má na volném datasetu rozlišení 0,25° (~25 km) – hrubší než ICON
+    (~7 km). V členitém terénu je proto rozdíl `model_alt` vs. `real_alt`
+    výraznější (viz poznámka níže).
+  - Za hranicí zhruba 90 h přechází IFS na **3hodinový krok**; některé
+    proměnné tedy nebudou hodinové po celých 16 dní. Panely musí umět
+    nerovnoměrný krok a chybějící hodnoty (mezera, ne interpolace na sílu).
+  - Běh modelu (`00`/`12` UTC) je dostupný s několikahodinovým zpožděním;
+    v hlavičce ukazujeme čas běhu, ne čas načtení.
 - Potřebné hodinové proměnné:
   `temperature_2m`, `apparent_temperature`, `relative_humidity_2m`,
   `cloud_cover`, `cloud_cover_low/mid/high`,
@@ -75,7 +97,7 @@ Vše je zvoleno tak, aby MVP běželo **bez placených API a bez API klíčů**.
   - **GPS** – browser Geolocation API (jen na vyžádání, ne automaticky),
   - **oblíbené** a **poslední** lokality v `localStorage`.
 
-### 2.4 Meteorologické výstrahy – MeteoAlarm (CAP)
+### 2.4 Meteorologické výstrahy – MeteoAlarm (CAP) *(fáze 2)*
 
 - MeteoAlarm agreguje oficiální výstrahy evropských met. služeb
   (za SK je zdrojem SHMÚ) ve formátu **CAP / ATOM**.
@@ -93,7 +115,7 @@ Vše je zvoleno tak, aby MVP běželo **bez placených API a bez API klíčů**.
   30 mm/24 h, teplota > 32 °C / < −15 °C, `cape` > 1500 J/kg). Jasně
   označit, že **nejde o oficiální výstrahu**.
 
-### 2.5 Radar – RainViewer
+### 2.5 Radar – RainViewer *(fáze 2)*
 
 - `https://api.rainviewer.com/public/weather-maps.json` – seznam snímků:
   ~2 h historie (10min krok) + **30 min nowcast**.
@@ -109,6 +131,32 @@ Vše je zvoleno tak, aby MVP běželo **bez placených API a bez API klíčů**.
 ---
 
 ## 3. Obrazovky a UX
+
+### 3.0 Vizuální jazyk (moderní redesign)
+
+Co se z předlohy **zachovává**: pořadí panelů, jedna sdílená časová osa,
+denní pás pod grafy, boxíky denních úhrnů srážek, hustota informací.
+
+Co se **mění**:
+
+| Prvek        | Předloha                              | Nově                                                                 |
+| ------------ | ------------------------------------- | -------------------------------------------------------------------- |
+| Rámečky      | plný černý rámeček kolem každého panelu | bez rámečků; panely odděluje bílé místo a jemná základní linka        |
+| Mřížka       | plná mřížka přes celou plochu          | jen vodorovné linky u popisků os, 10 % opacity; svislé jen na 00 UTC  |
+| Nadpisy      | červený centrovaný text nad panelem    | popisek vlevo nahoře, malý, sekundární barva; jednotka v závorce      |
+| Písmo        | bitmapové, ~9 px                       | systémový sans (`ui-sans-serif`), tabulární číslice pro osy           |
+| Barvy        | plné primární (červená/žlutá/modrá)    | tlumená paleta s dostatečným kontrastem v obou motivech (§8)          |
+| Popisky osy  | `00 06 12 18` u každého dne            | adaptivní hustota podle šířky – od 6h kroku po jen půlnoci            |
+| Pozadí       | bílá                                   | světlý i **tmavý motiv**, výchozí podle `prefers-color-scheme`         |
+
+Design tokens jako CSS proměnné (`--panel-temp`, `--panel-precip-rain`,
+`--panel-precip-snow`, `--panel-wind`, `--panel-gust`, `--grid`, `--ink`,
+`--ink-muted`), obě sady motivů v jednom souboru. Žádná barva se
+nezapisuje natvrdo v komponentě – to je podmínka toho, aby tmavý režim
+a barvoslepá paleta nebyly dodatečné záplaty.
+
+Noc, víkend a nejistota po dni 10 se kreslí jako **podklad**, ne jako
+další čára – graf tím nezhoustne.
 
 ### 3.1 Meteogram (hlavní obrazovka)
 
@@ -129,32 +177,30 @@ předloze):
 | 6 | Směr větru               | bodový graf světových stran (S/SV/V/JV/J/JZ/Z/SZ), jako předloha |
 
 Průřezové prvky časové osy:
-- svislé mřížkové čáry po 6 h, popisky `00 06 12 18`,
+- svislé linky na 00 UTC, popisky hodin v hustotě podle šířky (§3.6),
 - pás s dny (`Pon 27`, `Uto 28`, …), víkendy zvýrazněné,
 - **noční pásma** (mezi západem a východem slunce) jemným podkladem,
 - svislá čára „teď“,
 - **sdílený hover/tap crosshair** – ve všech panelech naráz + plovoucí
-  tooltip se všemi hodnotami pro daný čas.
-
-Interakce: horizontální zoom/pan (16 dní se na mobil nevejde čitelně).
-Na mobilu default rozsah 3 dny s plynulým scrollem a „minimapou“
-celého období; na desktopu celých 16 dní.
+  tooltip se všemi hodnotami pro daný čas,
+- za dnem 10 tlumené vykreslení + poznámka o klesající spolehlivosti.
 
 ### 3.2 Výběr lokality
 
-Modal/sheet: našeptávač (debounce 300 ms), tlačítko „Moje poloha“,
-seznam oblíbených a posledních. Výsledek se propíše do URL
+Našeptávač (debounce 300 ms), tlačítko „Moja poloha“, seznam oblíbených
+a posledních. Podání se liší podle zařízení (§3.6): bottom sheet na
+dotykových, dialog uprostřed na desktopu. Výsledek se propíše do URL
 (`/?lat=49.276&lon=20.683&name=Nová%20Ľubovňa`) → sdílitelný odkaz,
 funkční deep-link.
 
-### 3.3 Výstrahy
+### 3.3 Výstrahy *(fáze 2)*
 
 Banner nad meteogramem obarvený podle nejvyšší severity; klik otevře
 detail: typ jevu, ikona, platnost od–do, text, zdroj + odkaz na SHMÚ.
 Období platnosti výstrahy se navíc vyznačí jako barevný pás v časové
 ose meteogramu – to je hlavní přidaná hodnota oproti předloze.
 
-### 3.4 Radar
+### 3.4 Radar *(fáze 2)*
 
 Fullscreen mapa, marker vybrané lokality, časová osa se snímky,
 play/pauza, krokování, přepínač historie/nowcast, průhlednost vrstvy,
@@ -162,8 +208,59 @@ barevná škála. Mapová knihovna se načítá **lazy** jen na této route.
 
 ### 3.5 Nastavení
 
-Jednotky (°C/°F, m/s vs. km/h, mm/in), model, jazyk (SK/CS/EN), motiv
-(auto/světlý/tmavý), korekce teploty podle nadm. výšky, 12/24 h.
+Jednotky (°C, m/s vs. km/h, mm), jazyk (SK/CS), motiv (auto/světlý/tmavý),
+korekce teploty podle nadm. výšky, 12/24 h. Přepínač modelu přibude
+ve fázi 2.
+
+### 3.6 Device-aware chování
+
+„Device-aware“ znamená víc než breakpointy podle šířky okna. Aplikace
+se rozhoduje podle **čtyř nezávislých signálů**, protože se nekryjí –
+tablet s klávesnicí je široký a dotykový zároveň, notebook s dotykovým
+displejem umí obojí:
+
+| Signál            | Zjištění                                   | Co ovlivňuje                                            |
+| ----------------- | ------------------------------------------- | -------------------------------------------------------- |
+| Šířka plochy      | container queries nad meteogramem           | počet zobrazených dní, hustota popisků osy, výška panelů  |
+| Druh vstupu       | `pointer: fine` / `coarse`, `hover: hover`  | crosshair na hover vs. na tažení prstem; velikost cílů    |
+| Orientace         | `orientation: landscape`                    | na mobilu na šířku se zobrazí víc dní a skryje se hlavička |
+| Preference        | `prefers-color-scheme`, `prefers-reduced-motion`, `prefers-contrast` | motiv, animace přechodů, síla mřížky      |
+
+Konkrétní chování:
+
+| Třída                     | Výchozí rozsah | Ovládání                                    | Panely                            |
+| ------------------------- | -------------- | -------------------------------------------- | --------------------------------- |
+| Telefon na výšku (<600 px) | 2 dny          | swipe = posun v čase, pinch = zoom, tap = crosshair, haptika | všech 6, nižší, popisek uvnitř panelu |
+| Telefon na šířku          | 4 dny          | totéž, hlavička se sbalí                     | všech 6                           |
+| Tablet (600–1024 px)      | 5 dní          | dotyk i myš, obojí aktivní                   | všech 6, plná výška                |
+| Desktop (>1024 px)        | 16 dní naráz   | hover crosshair, kolečko = zoom, klávesnice (←/→ po hodinách, Home/End) | všech 6 + druhotné čáry (pocitová teplota) |
+
+Implementačně:
+- rozsah a hustota popisků se počítají z **naměřené šířky kontejneru**
+  (ResizeObserver), ne z `window.innerWidth` – graf se pak chová správně
+  i při split-screenu a při změně orientace,
+- vstupní vrstva je jedna: Pointer Events pokrývají myš, dotyk i pero;
+  nepíšou se dvě sady handlerů,
+- SVG se kreslí v logických souřadnicích a škáluje `viewBox`em, takže na
+  Retina/HiDPI je ostré bez zvláštní větve v kódu,
+- `prefers-reduced-motion` vypne dojezd (momentum) scrollu a přechody,
+- žádný sniffing `user-agent`; rozhoduje jen schopnost a rozměr.
+
+### 3.7 Jazyk
+
+- **SK je výchozí**, CS jako druhá volba; přepínač v nastavení,
+  volba se pamatuje v `localStorage`.
+- První návštěva: pokud `navigator.language` začíná na `cs`, nabídne
+  se CS, jinak SK. Nikdy se nepřepíná automaticky později.
+- Dvě ploché slovníkové mapy (`sk.json`, `cs.json`) + typ odvozený
+  z klíčů SK, aby chybějící český překlad spadl na kompilaci, ne na
+  produkci.
+- Data, čísla a jednotky přes `Intl` s locale `sk-SK` / `cs-CZ` –
+  zkratky dnů (`Pon`, `Uto`, `Str`, `Štv`, `Pia`, `Sob`, `Ned` vs.
+  `Po`, `Út`, `St`, `Čt`, `Pá`, `So`, `Ne`) se tím vyřeší samy.
+- Časová zóna se řídí lokalitou (`timezone=auto` z Open-Meteo), ne
+  jazykem – meteogram pro slovenskou obec ukazuje místní čas i pro
+  uživatele s CS rozhraním. Zóna se zobrazí v hlavičce.
 
 ---
 
@@ -181,7 +278,12 @@ Prohlížeč (SPA, React + TS)
 ```
 
 - **Statický frontend** buildovaný Vite, servírovaný z Netlify CDN.
-- **Netlify Functions** jen tam, kde je nutná serverová strana:
+- **MVP nepotřebuje žádnou serverovou funkci** – Open-Meteo posílá CORS
+  hlavičky, takže prohlížeč volá API přímo. Adresář `netlify/functions`
+  vznikne až s výstrahami ve fázi 2. Datová vrstva ale volá vlastní
+  modul (`/src/api`), ne `fetch` roztroušený v komponentách, takže
+  případné pozdější přesměrování na proxy je změna na jednom místě.
+- **Netlify Functions** (fáze 2) jen tam, kde je nutná serverová strana:
   parsování CAP XML, obcházení CORS, skrytí případných klíčů, cache.
 - Cache na hraně přes hlavičky:
   `Netlify-CDN-Cache-Control: public, s-maxage=600, stale-while-revalidate=3600`
@@ -200,10 +302,10 @@ Prohlížeč (SPA, React + TS)
 | Build         | Vite                         | rychlý, nativní Netlify podpora                  |
 | UI            | React 18 + TypeScript        | ekosystém, typová bezpečnost nad meteo daty      |
 | Grafy         | **vlastní SVG + d3-scale/d3-shape** | viz níže                                 |
-| Mapa          | Leaflet (nebo MapLibre GL)   | lehké, dlaždicová vrstva RainVieweru triviálně   |
+| Mapa (fáze 2) | Leaflet (nebo MapLibre GL)   | lehké, dlaždicová vrstva RainVieweru triviálně   |
 | Data fetching | TanStack Query               | cache, retry, dedup, persistence                 |
-| Stylování     | CSS Modules nebo Tailwind    | dle preference; oboje na Netlify bez problému    |
-| i18n          | vlastní slovníky (bez knihovny) | 3 jazyky, plochý JSON stačí                  |
+| Stylování     | CSS Modules + CSS proměnné   | design tokens a tmavý motiv bez build-time magie |
+| i18n          | vlastní slovníky (bez knihovny) | SK + CS, plochý JSON stačí; `Intl` na data a čísla |
 | Testy         | Vitest + Playwright          | jednotkové nad transformacemi, e2e nad meteogramem |
 | CI            | GitHub Actions + Netlify deploy previews | kontrola PR před merge               |
 
@@ -219,20 +321,27 @@ ARIA) a serverový export do PNG, kdyby se hodil sdílený náhled.
 
 ## 5. Struktura repozitáře (záměr)
 
+Hvězdičkou označené položky vznikají až ve fázi 2.
+
 ```
 /src
-  /api            klienti Open-Meteo, RainViewer, výstrah + Zod schémata
+  /api            klienti Open-Meteo (forecast, elevation, geocoding)
+                  + Zod schémata;  * rainviewer.ts, alerts.ts
   /components
-    /meteogram    TimeAxis, TemperaturePanel, CloudPanel, PrecipPanel,
-                  PressurePanel, WindPanel, WindDirPanel, Crosshair
-    /location     SearchDialog, FavoritesList
-    /alerts       AlertBanner, AlertDetail
-    /radar        RadarMap, RadarTimeline
-  /hooks          useForecast, useAlerts, useRadarFrames, useUnits
-  /lib            scales, formatting, jednotky, čas/timezone, i18n
-  /pages          Home, Radar, Settings
-/netlify/functions
-  alerts.ts       MeteoAlarm CAP → JSON
+    /meteogram    TimeAxis, DayStrip, TemperaturePanel, CloudPanel,
+                  PrecipPanel, PressurePanel, WindPanel, WindDirPanel,
+                  Crosshair, Tooltip, NightBands
+    /location     SearchDialog, FavoritesList, GeolocateButton
+  * /alerts       AlertBanner, AlertDetail
+  * /radar        RadarMap, RadarTimeline
+  /hooks          useForecast, useElevation, useContainerSize,
+                  useViewport (třída zařízení), useUnits, useLocale
+  /lib            scales, formatting, jednotky, čas/timezone
+  /i18n           sk.json, cs.json, index.ts
+  /styles         tokens.css (světlý + tmavý motiv), base.css
+  /pages          Home, Settings;  * Radar
+* /netlify/functions
+    alerts.ts     MeteoAlarm CAP → JSON
 /docs             tento návrh, poznámky k datovým zdrojům
 netlify.toml
 ```
@@ -241,17 +350,26 @@ netlify.toml
 
 ## 6. Etapy
 
-| Etapa | Obsah                                                                | Odhad     |
-| ----- | -------------------------------------------------------------------- | --------- |
-| M0    | skeleton, Vite+TS, netlify.toml, první deploy, CI                    | 0,5 dne   |
-| M1    | datová vrstva Open-Meteo + typy + výběr lokality + URL stav          | 1,5 dne   |
-| M2    | meteogram: časová osa, 6 panelů, crosshair, zoom, responzivita       | 3–4 dny   |
-| M3    | výstrahy: Netlify Function, CAP parser, banner, pásy v ose           | 1,5 dne   |
-| M4    | radar: mapa, dlaždice, časová osa, animace                           | 1,5 dne   |
-| M5    | PWA, i18n, tmavý režim, přístupnost, nastavení, testy, doladění      | 2 dny     |
+### MVP – meteogram
 
-Celkem ~10–11 člověkodnů. Použitelný veřejný odkaz je po M2
-(meteogram funguje sám o sobě), M3/M4 jsou přírůstkové.
+| Etapa | Obsah                                                                 | Odhad     |
+| ----- | --------------------------------------------------------------------- | --------- |
+| M0    | skeleton, Vite+TS, `netlify.toml`, design tokens, první deploy, CI    | 0,5 dne   |
+| M1    | datová vrstva ECMWF přes Open-Meteo + typy + výběr lokality + URL stav | 1,5 dne  |
+| M2    | meteogram: sdílená osa, 6 panelů, crosshair, tmavý motiv              | 3 dny     |
+| M3    | device-aware vrstva: zoom/pan, gesta, klávesnice, třídy zařízení (§3.6) | 1,5 dne  |
+| M4    | SK/CS lokalizace, nastavení, PWA, přístupnost, testy, doladění        | 2 dny     |
+
+**MVP celkem ~8,5 člověkodne.** Veřejný odkaz je použitelný už po M2;
+M3 a M4 jsou dolaďování téhož.
+
+### Fáze 2 – po nasazení MVP
+
+| Etapa | Obsah                                                          | Odhad   |
+| ----- | -------------------------------------------------------------- | ------- |
+| F2-A  | výstrahy: Netlify Function, CAP parser, banner, pásy v ose      | 1,5 dne |
+| F2-B  | radar: mapa, dlaždice RainVieweru, časová osa, animace          | 1,5 dne |
+| F2-C  | přepínač modelů (ICON/GFS/best match) + srovnání v jednom grafu | 1 den   |
 
 ---
 
@@ -268,17 +386,26 @@ Celkem ~10–11 člověkodnů. Použitelný veřejný odkaz je po M2
 
 ## 8. Přístupnost a výkon
 
-- Cíl: LCP < 2 s na 4G, JS bundle bez mapy < 150 kB gzip
-  (mapa a radar lazy chunk).
+- Cíl: LCP < 2 s na 4G, JS bundle MVP < 120 kB gzip (bez mapy, ta
+  přijde jako lazy chunk až ve fázi 2).
 - Meteogram má textovou alternativu (tabulka hodnot) pro čtečky;
   crosshair ovladatelný klávesnicí (šipky = posun po hodinách).
 - Barvy panelů mít rozlišitelné i pro deuteranopii – nespoléhat jen
   na modrá/zelená u větru a srážek, přidat vzor/tvar.
+- Kontrast textu a čar min. 4,5:1 v **obou** motivech; ověřit i tlumené
+  vykreslení po dni 10, aby nespadlo pod čitelnost.
+- 384 hodinových bodů × 6 panelů je pro SVG bez problému, ale hodnoty
+  se předpočítají jednou (`useMemo` nad odpovědí API), ne při každém
+  pohybu crosshairu; crosshair se překresluje samostatně nad statickou
+  vrstvou.
 
 ---
 
 ## 9. Co vědomě není v MVP
 
+- **Výstrahy a radar** – rozhodnutí 5, přesunuto do fáze 2 (§6).
+- **Přepínač modelů** – MVP jede na ECMWF napevno (rozhodnutí 4).
+- **Anglická lokalizace** – jen SK a CS (rozhodnutí 2).
 - Push notifikace na výstrahy – vyžadují perzistentní úložiště
   odběratelů, VAPID klíče a plánovanou funkci; jde to na Netlify
   Scheduled Functions + Supabase, ale je to samostatná etapa.
@@ -290,24 +417,43 @@ Celkem ~10–11 člověkodnů. Použitelný veřejný odkaz je po M2
 
 ---
 
-## 10. Rizika a otevřené otázky
+## 10. Rizika
 
-| Riziko                                      | Dopad | Ošetření                                              |
-| ------------------------------------------- | ----- | ----------------------------------------------------- |
-| MeteoAlarm vyžaduje registraci / omezí užití | střední | ověřit hned v M3; fallback = prahová upozornění (§2.4) |
-| Fair-use limity Open-Meteo při růstu        | nízký | CDN cache; případně placený tier (~29 €/měs)          |
-| RainViewer free jen pro nekomerční užití    | nízký | dokud je projekt nekomerční, OK; jinak jiný poskytovatel |
-| OSM dlaždice a jejich tile policy           | nízký | přejít na CARTO/Stadia free tier                      |
-| Nesoulad model_alt vs. real_alt v horách    | střední | zobrazit obě výšky + volitelná korekce (§2.1)         |
-| 16denní horizont je fakticky málo přesný    | –     | po dni 10 zobrazit šedivější/tečkované vykreslení a poznámku o nejistotě |
+### Týkají se MVP
 
-Otázky k rozhodnutí před začátkem kódování:
+| Riziko                                      | Dopad   | Ošetření                                              |
+| ------------------------------------------- | ------- | ----------------------------------------------------- |
+| ECMWF IFS 0,25° je hrubý – nesoulad `model_alt` vs. `real_alt` v horách | střední | zobrazit obě výšky + volitelná korekce (§2.1); ve fázi 2 nabídnout ICON |
+| IFS přechází po ~90 h na 3hodinový krok     | střední | panely musí zvládnout nerovnoměrný krok už od začátku (§2.1) |
+| 16denní horizont je fakticky málo přesný    | –       | po dni 10 tlumené vykreslení a poznámka o nejistotě   |
+| Fair-use limity Open-Meteo při růstu        | nízký   | klientská cache + krátký `staleTime`; případně proxy s CDN cachí nebo placený tier (~29 €/měs) |
+| Ostrost a čitelnost na malých displejích    | nízký   | ověřit na skutečném telefonu už v M2, ne až v M3      |
 
-1. **Vzhled:** věrná nápodoba SHMÚ (bílé pozadí, červené nadpisy,
-   tenké čáry) nebo moderní redesign se zachovaným rozvržením?
-2. **Jazyk rozhraní:** primárně SK, CS, nebo rovnou vícejazyčně?
-3. **Cílové zařízení:** mobil first, nebo desktopová hustota dat jako v předloze?
-4. **Model:** držet se ECMWF kvůli shodě s předlohou, nebo default
-   `best_match` (obvykle přesnější pro krátký horizont)?
-5. **Rozsah MVP:** je nutné mít radar i výstrahy v prvním nasazení,
-   nebo stačí meteogram a zbytek přidat později?
+### Aktivují se až ve fázi 2
+
+| Riziko                                      | Dopad   | Ošetření                                              |
+| ------------------------------------------- | ------- | ----------------------------------------------------- |
+| MeteoAlarm vyžaduje registraci / omezí užití | střední | ověřit na začátku F2-A; fallback = prahová upozornění (§2.4) |
+| RainViewer free jen pro nekomerční užití    | nízký   | dokud je projekt nekomerční, OK; jinak jiný poskytovatel |
+| OSM dlaždice a jejich tile policy           | nízký   | přejít na CARTO/Stadia free tier                      |
+
+---
+
+## 11. Co ověřit hned na začátku M1
+
+Síťový přístup při psaní tohoto návrhu byl omezený, endpointy tedy
+nejsou ověřené živě. První úkol v M1 je proto jeden ruční dotaz na
+Open-Meteo a kontrola, že:
+
+1. `models=ecmwf_ifs025` vrací data na plných `forecast_days=16`
+   (pokud IFS končí na 15 dnech, aplikace zobrazí, co model dá, a
+   16 dní zůstane cílem pro modely, které tak daleko dosáhnou),
+2. které proměnné jsou u IFS opravdu dostupné – `snow_depth`,
+   `precipitation_probability` a `cape` u některých modelů chybí a
+   panely na to musí být připravené,
+3. od kolikáté hodiny se krok mění z 1 h na 3 h,
+4. `timezone=auto` vrací očekávanou zónu a `elevation` sedí na
+   `model_alt` z předlohy.
+
+Výsledek se zapíše sem do dokumentu – tím se přestane hádat a začne
+stavět na ověřených číslech.

@@ -1,6 +1,9 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { Forecast } from '../../api/openMeteo';
 import { useContainerWidth } from '../../hooks/useContainerWidth';
+import { useCoarsePointer, useReducedMotion } from '../../hooks/useMediaQuery';
+import { zoomBounds } from '../../lib/zoom';
+import { useMeteogramControls } from './useMeteogramControls';
 import {
   daySpans,
   nearestIndex,
@@ -39,13 +42,20 @@ interface Geometry {
  * naměřená šířka kontejneru, ne šířka okna – graf se tak chová správně
  * i ve split-screenu. Zoom a gesta doplní M3.
  */
-function layoutFor(width: number): {
+function layoutFor(
+  width: number,
+  coarsePointer: boolean,
+): {
   visibleHours: number;
   panelHeight: number;
   /** Na úzkém displeji popisek nad plochou; přes graf by ji zakryl. */
   titleAbove: boolean;
 } {
   if (width < 600) return { visibleHours: 48, panelHeight: 66, titleAbove: true };
+  // Telefon na šířku: víc dní, ale pořád nízké panely a hrubý ukazatel.
+  if (coarsePointer && width < 900) {
+    return { visibleHours: 96, panelHeight: 72, titleAbove: false };
+  }
   if (width < 1024) return { visibleHours: 120, panelHeight: 80, titleAbove: false };
   return { visibleHours: Number.POSITIVE_INFINITY, panelHeight: 98, titleAbove: false };
 }
@@ -54,19 +64,44 @@ const TITLE_ROW_HEIGHT = 18;
 
 export function Meteogram({ forecast }: { forecast: Forecast }) {
   const [container, containerWidth] = useContainerWidth<HTMLDivElement>();
-  const overlayRef = useRef<HTMLDivElement>(null);
+  const coarsePointer = useCoarsePointer();
+  const reducedMotion = useReducedMotion();
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [scrollLeft, setScrollLeft] = useState(0);
 
+  const first = forecast.times[0] ?? 0;
+  const last = forecast.times[forecast.times.length - 1] ?? first;
+  const totalHours = Math.max(1, (last - first) / HOUR);
+  const available = Math.max(240, containerWidth - AXIS_WIDTH);
+  const layout = layoutFor(containerWidth, coarsePointer);
+  const bounds = useMemo(() => zoomBounds(totalHours, available), [totalHours, available]);
+  const defaultPxPerHour = available / Math.min(layout.visibleHours, totalHours);
+
+  // Aktuální přiblížení musí být dostupné uvnitř zpětného volání, které se
+  // předává ovládání – jinak by se do něj zamrazila hodnota z prvního renderu.
+  const controlsPxRef = useRef(defaultPxPerHour);
+
+  const setPointFromPlotX = useCallback(
+    (contentX: number) => {
+      const seconds = first + ((contentX - AXIS_WIDTH) / controlsPxRef.current) * HOUR;
+      setHoverIndex(nearestIndex(forecast.times, seconds));
+    },
+    [first, forecast.times],
+  );
+
+  const controls = useMeteogramControls({
+    bounds,
+    defaultPxPerHour,
+    coarsePointer,
+    reducedMotion,
+    onPoint: setPointFromPlotX,
+    onClearPoint: () => setHoverIndex(null),
+  });
+  controlsPxRef.current = controls.pxPerHour;
+
   const geometry = useMemo<Geometry>(() => {
     const { times, utcOffsetSeconds } = forecast;
-    const first = times[0] ?? 0;
-    const last = times[times.length - 1] ?? first;
-    const totalHours = Math.max(1, (last - first) / HOUR);
-
-    const layout = layoutFor(containerWidth);
-    const available = Math.max(240, containerWidth - AXIS_WIDTH);
-    const pxPerHour = available / Math.min(layout.visibleHours, totalHours);
+    const pxPerHour = controls.pxPerHour;
 
     const xTime = (seconds: number) => ((seconds - first) / HOUR) * pxPerHour;
     const dimFrom = uncertaintyStart(times);
@@ -86,7 +121,7 @@ export function Meteogram({ forecast }: { forecast: Forecast }) {
       panelHeight: layout.panelHeight,
       titleAbove: layout.titleAbove,
     };
-  }, [forecast, containerWidth]);
+  }, [forecast, first, last, totalHours, controls.pxPerHour, layout.panelHeight, layout.titleAbove]);
 
   const panels = useMemo(
     () =>
@@ -109,15 +144,53 @@ export function Meteogram({ forecast }: { forecast: Forecast }) {
     [forecast, geometry.panelHeight],
   );
 
-  const onPointerMove = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
-      const bounds = overlayRef.current?.getBoundingClientRect();
-      if (!bounds) return;
-      const seconds =
-        (forecast.times[0] ?? 0) + ((event.clientX - bounds.left) / geometry.pxPerHour) * HOUR;
-      setHoverIndex(nearestIndex(forecast.times, seconds));
+  /** Ukazatel posunutý klávesnicí musí zůstat ve výřezu. */
+  const ensureVisible = useCallback((x: number) => {
+    const scroller = controls.scrollerRef.current;
+    if (!scroller) return;
+    const left = scroller.scrollLeft;
+    const right = left + scroller.clientWidth - AXIS_WIDTH;
+    const margin = 40;
+    if (x < left + margin) scroller.scrollLeft = Math.max(0, x - margin);
+    else if (x > right - margin) scroller.scrollLeft = x - scroller.clientWidth + AXIS_WIDTH + margin;
+  }, [controls.scrollerRef]);
+
+  const onKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      const lastIndex = forecast.times.length - 1;
+      const move = (target: number) => {
+        const next = Math.min(lastIndex, Math.max(0, target));
+        setHoverIndex(next);
+        ensureVisible(geometry.x(next));
+        event.preventDefault();
+      };
+      const current = hoverIndex ?? 0;
+
+      switch (event.key) {
+        case 'ArrowRight':
+          return move(current + (event.shiftKey ? 6 : 1));
+        case 'ArrowLeft':
+          return move(current - (event.shiftKey ? 6 : 1));
+        case 'Home':
+          return move(0);
+        case 'End':
+          return move(lastIndex);
+        case '+':
+        case '=':
+          event.preventDefault();
+          return controls.zoomByStep(1);
+        case '-':
+          event.preventDefault();
+          return controls.zoomByStep(-1);
+        case '0':
+          event.preventDefault();
+          return controls.resetZoom();
+        case 'Escape':
+          return setHoverIndex(null);
+        default:
+      }
     },
-    [forecast.times, geometry.pxPerHour],
+    [controls, ensureVisible, forecast.times.length, geometry, hoverIndex],
   );
 
   const hoverX = hoverIndex !== null && hoverIndex >= 0 ? geometry.x(hoverIndex) : null;
@@ -126,9 +199,45 @@ export function Meteogram({ forecast }: { forecast: Forecast }) {
   const flipTooltip = hoverX !== null && hoverX - scrollLeft > visibleWidth - TOOLTIP_WIDTH;
 
   return (
-    <div className={styles.meteogram} ref={container}>
+    <div
+      className={styles.meteogram}
+      ref={container}
+      tabIndex={0}
+      role="group"
+      aria-label="Meteogram – šípkami sa posúva ukazovateľ, klávesmi + a − sa mení priblíženie"
+      onKeyDown={onKeyDown}
+    >
+      <div className={styles.toolbar}>
+        <span className={styles.hint}>
+          {coarsePointer ? 'Ťahaním sa posúva, štipcom približuje' : 'Kolieskom sa približuje, šípkami posúva ukazovateľ'}
+        </span>
+        <button
+          type="button"
+          className={styles.controlButton}
+          onClick={() => controls.zoomByStep(-1)}
+          aria-label="Oddialiť"
+        >
+          −
+        </button>
+        <button
+          type="button"
+          className={styles.controlButton}
+          onClick={() => controls.zoomByStep(1)}
+          aria-label="Priblížiť"
+        >
+          +
+        </button>
+        {controls.isZoomed && (
+          <button type="button" className={styles.controlButton} onClick={controls.resetZoom}>
+            Celé
+          </button>
+        )}
+      </div>
+
+      <div className={styles.frame}>
       <div
         className={styles.scroller}
+        ref={controls.scrollerRef}
         onScroll={(event) => setScrollLeft(event.currentTarget.scrollLeft)}
       >
         {panels.map(({ def, height, y, available, axisTicks }) => (
@@ -230,10 +339,8 @@ export function Meteogram({ forecast }: { forecast: Forecast }) {
         {/* Ukazatel leží nad všemi panely, proto je mimo jednotlivá SVG. */}
         <div
           className={styles.overlay}
-          ref={overlayRef}
           style={{ left: AXIS_WIDTH, width: geometry.width }}
-          onPointerMove={onPointerMove}
-          onPointerLeave={() => setHoverIndex(null)}
+          {...controls.handlers}
         >
           {geometry.nowX !== null && <span className={styles.now} style={{ left: geometry.nowX }} />}
           {hoverX !== null && <span className={styles.crosshair} style={{ left: hoverX }} />}
@@ -247,6 +354,7 @@ export function Meteogram({ forecast }: { forecast: Forecast }) {
             />
           )}
         </div>
+      </div>
       </div>
     </div>
   );

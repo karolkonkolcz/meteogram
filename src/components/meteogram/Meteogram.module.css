@@ -1,8 +1,28 @@
 .meteogram {
   position: relative;
+  --axis-width: 46px;
+}
+
+.frame {
+  position: relative;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+}
+
+/* Ovládanie je nad grafom, nie v ňom – v rohu plochy by kolidovalo s bublinou. */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.hint {
+  margin-right: auto;
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
 }
 
 /*
@@ -69,9 +89,13 @@
  * Popisek se lepí k levému okraji výřezu: při posunu na šestnáctý den
  * musí být pořád vidět, čí panel to vlastně je.
  */
+/*
+ * Odsadenie je od okraja výrezu, nie od plochy panelu – bez šírky osi
+ * by popisok podliezol pod zvislú os a schoval sa za ňu.
+ */
 .panelTitleInner {
   position: sticky;
-  left: var(--space-2);
+  left: calc(var(--axis-width) + var(--space-2));
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
@@ -114,6 +138,12 @@
   top: 0;
   bottom: 0;
   z-index: 3;
+  /*
+   * Zvislé posúvanie stránky zostáva prehliadaču, vodorovné gestá a štipec
+   * spracúva graf. Bez `pan-y` by prst nad grafom zablokoval scroll stránky.
+   */
+  touch-action: pan-y;
+  cursor: crosshair;
 }
 
 .crosshair,
@@ -177,4 +207,33 @@
 .tooltipRow dd {
   margin: 0;
   color: var(--ink);
+}
+
+/* Štipec ani koliesko nie sú objaviteľné – tlačidlá sú, preto tu sú vždy. */
+.controlButton {
+  min-width: 28px;
+  padding: 2px var(--space-2);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--ink-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .controlButton:hover {
+    color: var(--ink);
+  }
+}
+
+.meteogram:focus-visible {
+  outline: none;
+}
+
+/* Rámček dostane obrys, aby bolo vidieť, že graf prijíma klávesy. */
+.meteogram:focus-visible .frame {
+  outline: 2px solid var(--temp);
+  outline-offset: 2px;
 }

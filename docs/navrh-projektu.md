@@ -274,10 +274,30 @@ Konkrétní chování:
 
 | Třída                     | Výchozí rozsah | Ovládání                                    | Panely                            |
 | ------------------------- | -------------- | -------------------------------------------- | --------------------------------- |
-| Telefon na výšku (<600 px) | 2 dny          | swipe = posun v čase, pinch = zoom, tap = crosshair, haptika | všech 6, nižší, popisek uvnitř panelu |
-| Telefon na šířku          | 4 dny          | totéž, hlavička se sbalí                     | všech 6                           |
+| Telefon na výšku (<600 px) | 2 dny          | tažení = posun, štipec = zoom, ťuknutí = crosshair | všech 6, nižší, popisek **nad** panelem |
+| Telefon na šířku (coarse, <900 px) | 4 dny  | totéž                                        | všech 6                           |
 | Tablet (600–1024 px)      | 5 dní          | dotyk i myš, obojí aktivní                   | všech 6, plná výška                |
-| Desktop (>1024 px)        | 16 dní naráz   | hover crosshair, kolečko = zoom, klávesnice (←/→ po hodinách, Home/End) | všech 6 + druhotné čáry (pocitová teplota) |
+| Desktop (>1024 px)        | 16 dní naráz   | hover crosshair, kolečko = zoom, Shift+kolečko = posun, klávesnice | všech 6 + druhotné čáry (pocitová teplota) |
+
+Klávesnice (graf je fokusovatelný, `Tab` na něj stoupne):
+
+| Klávesa            | Účinek                                  |
+| ------------------ | --------------------------------------- |
+| ←/→                | ukazatel o jeden krok modelu             |
+| Shift + ←/→        | o šest kroků                             |
+| Home / End         | začátek a konec předpovědi               |
+| + / −              | přiblížení a oddálení                    |
+| 0                  | zpět na celý rozsah                      |
+| Esc                | skrýt ukazatel                           |
+
+Meze přiblížení nejsou libovolné: nejmenší je „celá předpověď ve výřezu"
+(oddálit víc nedává smysl), největší ukáže zhruba šest hodin. Při
+přiblížení zůstává okamžik pod prstem nebo kurzorem na místě – jinak by
+graf pod rukou ujížděl.
+
+Popisek panelu i osa hodnot se při vodorovném posunu **lepí k levému
+okraji výřezu**. Bez toho by uživatel na šestnáctém dni nevěděl, čí
+panel se dívá a jaké má jednotky.
 
 Implementačně:
 - rozsah a hustota popisků se počítají z **naměřené šířky kontejneru**
@@ -401,8 +421,21 @@ netlify.toml
 | M0    | skeleton, Vite+TS, `netlify.toml`, design tokens, první deploy, CI    | 0,5 dne   | ✅ hotovo |
 | M1    | datová vrstva ECMWF přes Open-Meteo + typy + výběr lokality + URL stav | 1,5 dne  | ✅ hotovo |
 | M2    | meteogram: sdílená osa, 6 panelů, crosshair, tmavý motiv              | 3 dny     | ✅ hotovo |
-| M3    | device-aware vrstva: zoom/pan, gesta, klávesnice, třídy zařízení (§3.6) | 1,5 dne  | – |
+| M3    | device-aware vrstva: zoom/pan, gesta, klávesnice, třídy zařízení (§3.6) | 1,5 dne  | ✅ hotovo |
 | M4    | SK/CS lokalizace, nastavení, PWA, přístupnost, testy, doladění        | 2 dny     | – |
+
+**Poznámka k M3 – co je a co není ověřené.** Kolečkem řízené přiblížení,
+tažení, ťuknutí, posun klávesnicí i návrat na celý rozsah jsou ověřené
+v prohlížeči automatizovaným průchodem. **Štipec dvěma prsty ověřený
+není** – syntetizovat věrohodné dva dotyky bez skutečného zařízení nejde,
+takže kód existuje a je napsaný podle stejné matematiky jako kolečko
+(otestované jednotkově), ale první skutečný dotyk ho vyzkouší až uživatel.
+Tlačítka `+`/`−` jsou proto v ovládání natrvalo: štipec ani kolečko nejsou
+objevitelné a nesmí být jedinou cestou.
+
+Ovládání sedí na `pointer-events`, ne na oddělených větvích pro myš a
+dotyk, a `touch-action: pan-y` nechává svislé posouvání stránky
+prohlížeči. Bez toho by prst položený na grafu zablokoval scroll stránky.
 
 **Poznámka k M2 – bez `d3-scale` a `d3-shape`.** Ze stejného důvodu jako
 u Zodu: meteogram z d3 potřeboval jen lineární mapování, hezké dílky a

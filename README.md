@@ -11,13 +11,13 @@ sú naplánované ako fáza 2.
 
 ## Stav
 
-Hotové etapy **M0 – kostra**, **M1 – dáta** a **M2 – meteogram**:
-šesť panelov nad spoločnou časovou osou, nočné pásma, víkendy, ukazovateľ
-so spoločnou bublinou pre všetky panely, tlmené vykreslenie po desiatom dni
-a tmavý motív. Tabuľka hodnôt zostáva ako textová alternatíva grafu.
+Hotové etapy **M0 – kostra**, **M1 – dáta**, **M2 – meteogram** a
+**M3 – ovládanie**: šesť panelov nad spoločnou časovou osou, nočné pásma,
+víkendy, ukazovateľ so spoločnou bublinou, tlmené vykreslenie po desiatom
+dni, tmavý motív, priblíženie kolieskom aj štipcom, ťahanie, ovládanie
+klávesnicou a výchozí výrez podľa triedy zariadenia.
 
-Nasleduje **M3** – priblíženie, gestá, ovládanie klávesnicou a doladenie
-správania podľa triedy zariadenia.
+Nasleduje **M4** – lokalizácia SK/CS, nastavenia, PWA a prístupnosť.
 
 ## Vývoj
 

@@ -4,8 +4,8 @@ Webová aplikace, která reprodukuje klasický meteogram SHMÚ/ECMWF, ale
 interaktivně, na 16 dní, s výběrem lokality, meteorologickými výstrahami
 a srážkovým radarem. Hostováno na Netlify.
 
-Stav dokumentu: **návrh odsouhlasen** (rozhodnutí zadavatele viz §0) –
-zatím se nepíše žádný kód.
+Stav dokumentu: **návrh odsouhlasen** (rozhodnutí zadavatele viz §0),
+implementace běží – hotové etapy a odchylky od návrhu viz §6.
 
 ---
 

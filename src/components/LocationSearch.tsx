@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { searchLocations, type GeocodingResult } from '../api/geocoding';
+import { reverseGeocode, searchLocations, type GeocodingResult } from '../api/geocoding';
 import { useDebounced } from '../hooks/useDebounced';
 import { formatCoordinates, type Location } from '../lib/location';
 import { useSettings } from '../settings/SettingsContext';
@@ -47,12 +47,21 @@ export function LocationSearch({
     setGeolocationError(null);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setLocating(false);
-        onSelect({
-          name: formatCoordinates(position.coords.latitude, position.coords.longitude),
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
+        const { latitude, longitude } = position.coords;
+        // Jméno místa je doplněk – když se nezjistí, zobrazí se souřadnice.
+        reverseGeocode(latitude, longitude, settings.locale)
+          .then((name) => {
+            setLocating(false);
+            onSelect({
+              name: name ?? formatCoordinates(latitude, longitude),
+              latitude,
+              longitude,
+            });
+          })
+          .catch(() => {
+            setLocating(false);
+            onSelect({ name: formatCoordinates(latitude, longitude), latitude, longitude });
+          });
       },
       () => {
         setLocating(false);

@@ -13,11 +13,14 @@ export function ForecastHeader({
   location,
   forecast,
   realElevation,
+  compact,
   onOpenSearch,
 }: {
   location: Location;
   forecast: Forecast | undefined;
   realElevation: number | null | undefined;
+  /** Na telefonu se hlavička krátí – přehled má začínat hned, ne pod metadaty. */
+  compact: boolean;
   onOpenSearch: () => void;
 }) {
   const { settings, t } = useSettings();
@@ -36,14 +39,14 @@ export function ForecastHeader({
         </button>
         <p className={`${styles.meta} tabular`}>
           {formatCoordinates(location.latitude, location.longitude)}
-          {typeof modelElevation === 'number' && (
+          {!compact && typeof modelElevation === 'number' && (
             <> · {t('header.model', { value: Math.round(modelElevation) })}</>
           )}
-          {typeof realElevation === 'number' && (
+          {!compact && typeof realElevation === 'number' && (
             <> · {t('header.terrain', { value: Math.round(realElevation) })}</>
           )}
         </p>
-        {difference !== null && Math.abs(difference) >= 50 && (
+        {!compact && difference !== null && Math.abs(difference) >= 50 && (
           <p className={styles.note}>
             {t(difference > 0 ? 'header.elevationHigher' : 'header.elevationLower', {
               value: Math.abs(difference),
@@ -54,9 +57,14 @@ export function ForecastHeader({
       </div>
 
       {forecast && (
-        <p className={`${styles.run} tabular`}>
-          ECMWF IFS · {formatModelRun(forecast.times[0] ?? 0)} +{' '}
-          {forecastLengthHours(forecast.times)} h · {forecast.timezone}
+        <p className={`${styles.run} tabular`} title={forecast.timezone}>
+          {compact
+            ? t('header.runShort', { hours: forecastLengthHours(forecast.times) })
+            : t('header.run', {
+                run: formatModelRun(forecast.times[0] ?? 0),
+                hours: forecastLengthHours(forecast.times),
+                zone: forecast.timezone,
+              })}
         </p>
       )}
     </header>

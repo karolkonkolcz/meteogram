@@ -73,3 +73,46 @@ export async function fetchElevation(
   const elevation = asRecord(await response.json())?.elevation;
   return Array.isArray(elevation) && typeof elevation[0] === 'number' ? elevation[0] : null;
 }
+
+const REVERSE_URL = 'https://api.bigdatacloud.net/data/reverse-geocode-client';
+
+/**
+ * Ze souřadnic GPS udělá jméno místa. Open-Meteo umí jen hledání podle
+ * názvu, reverzní směr ne – proto jiný poskytovatel (bez klíče, s CORS).
+ *
+ * Selhání není chyba: volající pak lokalitu pojmenuje souřadnicemi,
+ * jako dosud. Kvůli tomu se také nečeká déle než pár sekund.
+ */
+export async function reverseGeocode(
+  latitude: number,
+  longitude: number,
+  language: 'sk' | 'cs',
+): Promise<string | null> {
+  const params = new URLSearchParams({
+    latitude: String(latitude),
+    longitude: String(longitude),
+    localityLanguage: language,
+  });
+
+  try {
+    const response = await fetch(`${REVERSE_URL}?${params.toString()}`, {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) return null;
+    return pickPlaceName(await response.json());
+  } catch {
+    return null;
+  }
+}
+
+/** Z odpovědi se bere nejkonkrétnější název, který dává smysl ukázat. */
+export function pickPlaceName(payload: unknown): string | null {
+  const data = asRecord(payload);
+  if (!data) return null;
+
+  for (const key of ['city', 'locality', 'principalSubdivision'] as const) {
+    const value = data[key];
+    if (typeof value === 'string' && value.trim() !== '') return value.trim();
+  }
+  return null;
+}

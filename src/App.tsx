@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { CurrentConditions } from './components/CurrentConditions';
+import { DailyOverview } from './components/DailyOverview';
 import { ForecastHeader } from './components/ForecastHeader';
 import { ForecastTable } from './components/ForecastTable';
 import { LocationSearch } from './components/LocationSearch';
@@ -6,6 +8,7 @@ import { SettingsDialog } from './components/SettingsDialog';
 import { Meteogram } from './components/meteogram/Meteogram';
 import { useElevation, useForecast } from './hooks/useForecast';
 import { useLocationState } from './hooks/useLocationState';
+import { useMediaQuery } from './hooks/useMediaQuery';
 import { useSettings } from './settings/SettingsContext';
 import { applyElevationCorrection } from './lib/correction';
 import { applyWindUnit } from './lib/units';
@@ -13,9 +16,16 @@ import styles from './App.module.css';
 
 export function App() {
   const { settings, t } = useSettings();
+  // Na telefonu je hlavní pohled denní přehled; graf po hodinách je až
+  // druhá otázka a vyžadoval by vodorovné tažení hned na úvod.
+  const compact = useMediaQuery('(max-width: 599px)');
   const { location, recent, setLocation } = useLocationState();
   const [searchOpen, setSearchOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Graf i tabulka jsou drahé (stovky prvků). Ve sbalené sekci by se
+  // vykreslily zbytečně, proto se montují až při rozbalení.
+  const [chartOpen, setChartOpen] = useState(false);
+  const [tableOpen, setTableOpen] = useState(false);
   const forecast = useForecast(location);
   const elevation = useElevation(location);
 
@@ -50,6 +60,7 @@ export function App() {
         location={location}
         forecast={prepared}
         realElevation={elevation.data}
+        compact={compact}
         onOpenSearch={() => setSearchOpen(true)}
       />
 
@@ -70,11 +81,31 @@ export function App() {
             <p className={styles.status}>{t('app.missing', { list: prepared.missing.join(', ') })}</p>
           )}
 
-          <Meteogram forecast={prepared} />
+          {compact ? (
+            <>
+              <CurrentConditions forecast={prepared} />
 
-          <details className={styles.tableToggle}>
+              <h2 className={styles.sectionTitle}>{t('overview.title')}</h2>
+              <DailyOverview forecast={prepared} />
+
+              <details
+                className={styles.tableToggle}
+                onToggle={(event) => setChartOpen(event.currentTarget.open)}
+              >
+                <summary>{t('app.detailChart')}</summary>
+                {chartOpen && <Meteogram forecast={prepared} />}
+              </details>
+            </>
+          ) : (
+            <Meteogram forecast={prepared} />
+          )}
+
+          <details
+            className={styles.tableToggle}
+            onToggle={(event) => setTableOpen(event.currentTarget.open)}
+          >
             <summary>{t('app.table')}</summary>
-            <ForecastTable forecast={prepared} />
+            {tableOpen && <ForecastTable forecast={prepared} />}
           </details>
         </>
       )}

@@ -11,6 +11,11 @@
   min-width: 0;
 }
 
+.meta,
+.run {
+  overflow-wrap: anywhere;
+}
+
 .locationButton {
   display: flex;
   align-items: baseline;

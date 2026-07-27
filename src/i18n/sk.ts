@@ -11,6 +11,12 @@ export const sk = {
   'app.missing': 'Model pre túto lokalitu nedodal: {list}. Príslušné panely zostanú prázdne.',
   'app.table': 'Tabuľka hodnôt',
   'app.attribution': 'Dáta: Open-Meteo (CC BY 4.0), model ECMWF IFS.',
+  'now.title': 'Teraz',
+  'now.apparent': 'pocitovo {value} °C',
+  'overview.title': 'Denný prehľad',
+  'app.detailChart': 'Podrobný graf',
+  'header.run': 'ECMWF IFS · {run} + {hours} h · {zone}',
+  'header.runShort': 'ECMWF IFS · +{hours} h',
   'app.settings': 'Nastavenia',
 
   'header.change': 'zmeniť',

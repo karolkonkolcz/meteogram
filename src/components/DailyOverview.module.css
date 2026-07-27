@@ -1,0 +1,85 @@
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 3.4em 1fr auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+}
+
+.row + .row {
+  border-top: 1px solid var(--grid);
+}
+
+.weekend .day {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Po desátém dni klesá spolehlivost – stejné pravidlo jako v grafu. */
+.uncertain {
+  opacity: 0.62;
+}
+
+.day {
+  font-size: var(--text-sm);
+  color: var(--ink-secondary);
+}
+
+.temperatures {
+  display: grid;
+  grid-template-columns: 2.4em 1fr 2.4em;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.min {
+  text-align: right;
+  color: var(--ink-secondary);
+}
+
+.max {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Pruh na společném měřítku: až porovnání dnů mezi sebou dá číslům smysl. */
+.track {
+  position: relative;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--grid);
+}
+
+.bar {
+  position: absolute;
+  top: 0;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--temp);
+}
+
+.extras {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  min-width: 7.5em;
+  font-size: var(--text-xs);
+}
+
+.precipitation {
+  color: var(--rain);
+}
+
+.gust {
+  color: var(--ink-muted);
+}

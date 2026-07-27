@@ -9,6 +9,12 @@ export const cs: Dictionary = {
   'app.missing': 'Model pro tuto lokalitu nedodal: {list}. Příslušné panely zůstanou prázdné.',
   'app.table': 'Tabulka hodnot',
   'app.attribution': 'Data: Open-Meteo (CC BY 4.0), model ECMWF IFS.',
+  'now.title': 'Nyní',
+  'now.apparent': 'pocitově {value} °C',
+  'overview.title': 'Denní přehled',
+  'app.detailChart': 'Podrobný graf',
+  'header.run': 'ECMWF IFS · {run} + {hours} h · {zone}',
+  'header.runShort': 'ECMWF IFS · +{hours} h',
   'app.settings': 'Nastavení',
 
   'header.change': 'změnit',

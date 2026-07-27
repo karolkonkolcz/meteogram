@@ -1,0 +1,31 @@
+.group {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.button {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: var(--ink-secondary);
+}
+
+.button + .button {
+  border-left: 1px solid var(--border);
+}
+
+.button[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+@media (hover: hover) {
+  .button:hover {
+    color: var(--ink);
+  }
+}

@@ -1,0 +1,44 @@
+.app {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-4);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.subtitle {
+  margin: var(--space-1) 0 0;
+  max-width: 52ch;
+  font-size: var(--text-sm);
+  color: var(--ink-secondary);
+}
+
+/* Panely oddeľuje biele miesto a základná linka, nie rámček (docs §3.0). */
+.panels {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.footer {
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+.link {
+  color: inherit;
+}

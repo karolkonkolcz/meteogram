@@ -158,6 +158,50 @@ a barvoslepá paleta nebyly dodatečné záplaty.
 Noc, víkend a nejistota po dni 10 se kreslí jako **podklad**, ne jako
 další čára – graf tím nezhoustne.
 
+### 3.0.1 Paleta panelů (ověřená, ne odhadnutá)
+
+Barvy nejsou vybrané od oka – každý pár, který se potkává **v jednom
+panelu**, prošel validátorem (CVD odstup, normální vidění, kontrast vůči
+ploše). Hodnoty žijí v `src/styles/tokens.css`, tady je zdůvodnění.
+
+| Panel        | Role            | Světlý    | Tmavý     | Poznámka                                  |
+| ------------ | --------------- | --------- | --------- | ----------------------------------------- |
+| Teplota      | teplota         | `#eb6834` | `#d95926` | oranžová = teplo                          |
+| Teplota      | pocitová        | `#f29d7c` | `#a04d26` | slabší krok téhož odstínu + čárkovaně     |
+| Oblačnost    | celková         | `#6b7683` | `#8a94a1` | břidlicová plocha, ne žlutá – viz níže    |
+| Srážky       | déšť            | `#2a78d6` | `#3987e5` |                                           |
+| Srážky       | sníh            | `#1baf7a` | `#199e70` | ověřený pár s deštěm                      |
+| Tlak         | tlak            | `#4a3aa7` | `#9085e9` | tenká čára, vysoký kontrast               |
+| Vítr         | rychlost (čára) | `#008300` | `#4f9c4f` | zeleň jako v předloze                     |
+| Vítr         | nárazy (plocha) | `#7ab876` | `#2d6b2d` | slabší krok téže zeleně                   |
+| Směr větru   | body            | `#e34948` | `#e66767` | červené body jako v předloze              |
+
+**Naměřené výsledky** (OKLab ΔE ×100; práh CVD ≥ 8, normální vidění ≥ 15):
+
+- déšť ↔ sníh: světlý ΔE 23,1 CVD / 24,0 normální · tmavý 19,6 / 20,9 — **prochází**
+- teplota ↔ pocitová: jeden odstín, ordinální pár — prochází v obou motivech
+- vítr ↔ nárazy: jeden odstín, ordinální pár — prochází v obou motivech
+
+**Tři vědomé odchylky, každá s důvodem:**
+
+1. **Oblačnost není žlutá, jak v předloze.** Teplota je oranžová a panel
+   oblačnosti leží přímo pod ní; žlutá vedle oranžové je měřitelně
+   nejhorší pár celé palety (normální vidění ΔE 13,7 — pod prahem 15).
+   Břidlicová navíc odpovídá tomu, co oblačnost je, a nechá panel
+   ustoupit do pozadí. Ve fázi 2 se rozpad na nízkou/střední/vysokou
+   udělá jako tři kroky téhož odstínu, což je sekvenční kódování.
+2. **Oblačnost neprochází prahem sytosti** (čte se jako šedá). To je
+   správně: práh existuje kvůli rozlišení více sérií v jednom grafu a
+   oblačnost je v MVP sama ve svém panelu.
+3. **Sníh má ve světlém motivu kontrast 2,74:1**, tedy pod 3:1. Platí
+   pravidlo úlevy: hodnoty musí být dostupné i jinak než barvou —
+   tooltip a tabulkový výpis jsou proto povinné, ne volitelné.
+
+Napříč panely se barvy validovat nemusí (každý panel má vlastní osu,
+popisek a jednotku, identitu tedy nenese barva), ale v tmavém motivu
+jsou si tlak `#9085e9` a déšť `#3987e5` blízké – kdyby to v praxi rušilo,
+tlak se přebarví, ne přeuspořádá.
+
 ### 3.1 Meteogram (hlavní obrazovka)
 
 Sticky hlavička: název lokality, souřadnice, `model_alt` / `real_alt`,

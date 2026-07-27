@@ -1,0 +1,129 @@
+/*
+ * Design tokens – jediné místo, kde jsou barvy zapsané natvrdo.
+ * Komponenty se odkazují výhradně na proměnné, jinak by tmavý motiv
+ * a barvoslepá paleta skončily jako dodatečné záplaty (viz docs §3.0).
+ *
+ * Paleta je ověřená validátorem, ne odhadnutá. Výsledky a zdůvodnění
+ * jednotlivých voleb jsou v docs/navrh-projektu.md §3.0.1.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* --- plochy a inkoust --- */
+  --surface: #fcfcfb;
+  --plane: #f9f9f7;
+  --ink: #0b0b0b;
+  --ink-secondary: #52514e;
+  --ink-muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.1);
+
+  /* --- panely meteogramu --- */
+  --temp: #eb6834; /* teplota – oranžová */
+  --temp-soft: #f29d7c; /* pocitová teplota – slabší krok téhož odstínu */
+  --cloud: #6b7683; /* oblačnost – břidlicová (sekvenční ramp, viz §3.0.1) */
+  --cloud-low: #4c5661;
+  --cloud-mid: #6b7683;
+  --cloud-high: #9aa3ad;
+  --rain: #2a78d6; /* déšť – modrá */
+  --snow: #1baf7a; /* sníh – akvamarín (ověřený pár s deštěm) */
+  --pressure: #4a3aa7; /* tlak – fialová */
+  --wind: #008300; /* rychlost větru – zelená, čára */
+  --wind-gust: #7ab876; /* nárazy – slabší krok téže zeleně, plocha */
+  --wind-dir: #e34948; /* směr větru – červená */
+
+  /* --- podklady v ploše grafu --- */
+  --band-night: rgba(11, 11, 11, 0.045);
+  --band-weekend: rgba(11, 11, 11, 0.025);
+  --now-line: #0b0b0b;
+
+  /* --- stav (fáze 2: výstrahy; vždy s ikonou a popiskem) --- */
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+
+  /* --- typografie a rozměry --- */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --text-xs: 0.6875rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.125rem;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --radius: 4px;
+  --stroke-line: 2px;
+  --stroke-hair: 1px;
+}
+
+/*
+ * Tmavý motiv. Vlastní kroky pro tmavou plochu, ne automatické převrácení.
+ * Deklarace je dvakrát: media query pokrývá nastavení OS, [data-theme]
+ * pokrývá přepínač v aplikaci a musí vyhrát v obou směrech.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme='light'])) {
+    color-scheme: dark;
+
+    --surface: #1a1a19;
+    --plane: #0d0d0d;
+    --ink: #ffffff;
+    --ink-secondary: #c3c2b7;
+    --ink-muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.1);
+
+    --temp: #d95926;
+    --temp-soft: #a04d26;
+    --cloud: #8a94a1;
+    --cloud-low: #6a7480;
+    --cloud-mid: #8a94a1;
+    --cloud-high: #aab2bc;
+    --rain: #3987e5;
+    --snow: #199e70;
+    --pressure: #9085e9;
+    --wind: #4f9c4f;
+    --wind-gust: #2d6b2d;
+    --wind-dir: #e66767;
+
+    --band-night: rgba(255, 255, 255, 0.05);
+    --band-weekend: rgba(255, 255, 255, 0.03);
+    --now-line: #ffffff;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --surface: #1a1a19;
+  --plane: #0d0d0d;
+  --ink: #ffffff;
+  --ink-secondary: #c3c2b7;
+  --ink-muted: #898781;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.1);
+
+  --temp: #d95926;
+  --temp-soft: #a04d26;
+  --cloud: #8a94a1;
+  --cloud-low: #6a7480;
+  --cloud-mid: #8a94a1;
+  --cloud-high: #aab2bc;
+  --rain: #3987e5;
+  --snow: #199e70;
+  --pressure: #9085e9;
+  --wind: #4f9c4f;
+  --wind-gust: #2d6b2d;
+  --wind-dir: #e66767;
+
+  --band-night: rgba(255, 255, 255, 0.05);
+  --band-weekend: rgba(255, 255, 255, 0.03);
+  --now-line: #ffffff;
+}

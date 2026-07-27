@@ -11,8 +11,13 @@ sú naplánované ako fáza 2.
 
 ## Stav
 
-Etapa **M0 – kostra**: build, design tokens, motívy, CI a konfigurácia
-nasadenia. Dáta a výber lokality pridá etapa M1.
+Hotové etapy **M0 – kostra** (build, design tokens, motívy, CI, konfigurácia
+nasadenia) a **M1 – dáta** (predpoveď ECMWF z Open-Meteo, výber lokality,
+zdieľateľná URL, tabuľka hodnôt).
+
+Panely meteogramu sú zatiaľ prázdne miesta – vykreslí ich etapa M2.
+Do tej doby sú hodnoty v tabuľke pod nimi; tá zostane aj neskôr ako
+textová alternatíva grafu.
 
 ## Vývoj
 

@@ -370,7 +370,7 @@ Hvězdičkou označené položky vznikají až ve fázi 2.
 ```
 /src
   /api            klienti Open-Meteo (forecast, elevation, geocoding)
-                  + Zod schémata;  * rainviewer.ts, alerts.ts
+                  + tolerantní parsování;  * rainviewer.ts, alerts.ts
   /components
     /meteogram    TimeAxis, DayStrip, TemperaturePanel, CloudPanel,
                   PrecipPanel, PressurePanel, WindPanel, WindDirPanel,
@@ -396,13 +396,21 @@ netlify.toml
 
 ### MVP – meteogram
 
-| Etapa | Obsah                                                                 | Odhad     |
-| ----- | --------------------------------------------------------------------- | --------- |
-| M0    | skeleton, Vite+TS, `netlify.toml`, design tokens, první deploy, CI    | 0,5 dne   |
-| M1    | datová vrstva ECMWF přes Open-Meteo + typy + výběr lokality + URL stav | 1,5 dne  |
-| M2    | meteogram: sdílená osa, 6 panelů, crosshair, tmavý motiv              | 3 dny     |
-| M3    | device-aware vrstva: zoom/pan, gesta, klávesnice, třídy zařízení (§3.6) | 1,5 dne  |
-| M4    | SK/CS lokalizace, nastavení, PWA, přístupnost, testy, doladění        | 2 dny     |
+| Etapa | Obsah                                                                 | Odhad     | Stav |
+| ----- | --------------------------------------------------------------------- | --------- | ---- |
+| M0    | skeleton, Vite+TS, `netlify.toml`, design tokens, první deploy, CI    | 0,5 dne   | ✅ hotovo |
+| M1    | datová vrstva ECMWF přes Open-Meteo + typy + výběr lokality + URL stav | 1,5 dne  | ✅ hotovo |
+| M2    | meteogram: sdílená osa, 6 panelů, crosshair, tmavý motiv              | 3 dny     | – |
+| M3    | device-aware vrstva: zoom/pan, gesta, klávesnice, třídy zařízení (§3.6) | 1,5 dne  | – |
+| M4    | SK/CS lokalizace, nastavení, PWA, přístupnost, testy, doladění        | 2 dny     | – |
+
+**Poznámka k M1 – parsování bez Zodu.** Návrh původně počítal se Zod
+schématy. Při psaní se ukázalo, že potřebná pravidla nejsou validace
+schématu, ale doménová rozhodnutí: chybějící proměnnou je třeba ohlásit
+UI (`missing`), řadu s jinou délkou než časová osa zahodit (posunuté
+hodnoty jsou horší než prázdný panel) a nečíselnou hodnotu převést na
+`null`, ne na výjimku. Ručně psaný parser to vyjádří přímočařeji a
+nestojí nic v bundlu.
 
 **MVP celkem ~8,5 člověkodne.** Veřejný odkaz je použitelný už po M2;
 M3 a M4 jsou dolaďování téhož.
@@ -501,3 +509,22 @@ Open-Meteo a kontrola, že:
 
 Výsledek se zapíše sem do dokumentu – tím se přestane hádat a začne
 stavět na ověřených číslech.
+
+**Stav po M1:** síť zůstala nedostupná, ověření tedy stále nikdo
+neprovedl. Datová vrstva je proto napsaná tak, aby žádná z odpovědí na
+otázky 1–3 nevyžadovala zásah do kódu:
+
+- chybějící proměnná se objeví v poli `missing` a aplikace to napíše
+  uživateli místo toho, aby předstírala prázdný panel,
+- nepravidelný krok se nikde nepředpokládá; `stepHours()` ho počítá
+  z časové osy a je otestovaný právě na přechodu 1 h → 3 h,
+- kratší předpověď než 16 dní se vykreslí tak, jak přijde.
+
+Zbývá tedy jen zapsat naměřená čísla, ne přepisovat kód. Nejrychlejší
+způsob ověření je otevřít v prohlížeči:
+
+```
+https://api.open-meteo.com/v1/forecast?latitude=49.276&longitude=20.683
+  &models=ecmwf_ifs025&forecast_days=16&hourly=temperature_2m,snowfall,cape
+  &timezone=auto&timeformat=unixtime
+```

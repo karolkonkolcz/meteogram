@@ -1,0 +1,52 @@
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.identity {
+  min-width: 0;
+}
+
+.locationButton {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.name {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.change {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+  text-decoration: underline;
+}
+
+.meta,
+.run {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-sm);
+  color: var(--ink-secondary);
+}
+
+.run {
+  color: var(--ink-muted);
+}
+
+.note {
+  margin: var(--space-2) 0 0;
+  max-width: 52ch;
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}

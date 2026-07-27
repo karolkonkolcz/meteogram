@@ -1,4 +1,5 @@
 import type { Forecast } from '../api/openMeteo';
+import { useSettings } from '../settings/SettingsContext';
 import { formatDayLabel, formatTime, isSameLocalDay } from '../lib/time';
 import { degreesToCompass, formatNumber, formatPrecipitation } from '../lib/units';
 import styles from './ForecastTable.module.css';
@@ -9,25 +10,25 @@ import styles from './ForecastTable.module.css';
  * ve světlém motivu (docs §3.0.1), takže nezmizí ani později.
  */
 export function ForecastTable({ forecast }: { forecast: Forecast }) {
+  const { settings, t } = useSettings();
   const { times, hourly, utcOffsetSeconds } = forecast;
+  const windUnit = t(settings.windUnit === 'kmh' ? 'unit.kmh' : 'unit.ms');
 
   return (
     <div className={styles.wrapper}>
       <table className={`${styles.table} tabular`}>
-        <caption className="visually-hidden">
-          Hodinové hodnoty predpovede pre zvolenú lokalitu
-        </caption>
+        <caption className="visually-hidden">{t('table.caption')}</caption>
         <thead>
           <tr>
-            <th scope="col">Čas</th>
-            <th scope="col">Teplota °C</th>
-            <th scope="col">Pocitová °C</th>
-            <th scope="col">Oblačnosť %</th>
-            <th scope="col">Zrážky mm</th>
-            <th scope="col">Tlak hPa</th>
-            <th scope="col">Vietor m/s</th>
-            <th scope="col">Nárazy m/s</th>
-            <th scope="col">Smer</th>
+            <th scope="col">{t('table.time')}</th>
+            <th scope="col">{t('table.temperature')} {t('unit.celsius')}</th>
+            <th scope="col">{t('table.apparent')} {t('unit.celsius')}</th>
+            <th scope="col">{t('table.cloud')} {t('unit.percent')}</th>
+            <th scope="col">{t('table.precipitation')} {t('unit.mm')}</th>
+            <th scope="col">{t('table.pressure')} {t('unit.hpa')}</th>
+            <th scope="col">{t('table.wind')} {windUnit}</th>
+            <th scope="col">{t('table.gust')} {windUnit}</th>
+            <th scope="col">{t('table.direction')}</th>
           </tr>
         </thead>
         <tbody>
@@ -41,7 +42,7 @@ export function ForecastTable({ forecast }: { forecast: Forecast }) {
                 <th scope="row" className={styles.time}>
                   {newDay && (
                     <span className={styles.day}>
-                      {formatDayLabel(time, utcOffsetSeconds, 'sk')}
+                      {formatDayLabel(time, utcOffsetSeconds, settings.locale)}
                     </span>
                   )}
                   {formatTime(time, utcOffsetSeconds)}

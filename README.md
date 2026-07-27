@@ -11,13 +11,20 @@ sú naplánované ako fáza 2.
 
 ## Stav
 
-Hotové etapy **M0 – kostra**, **M1 – dáta**, **M2 – meteogram** a
-**M3 – ovládanie**: šesť panelov nad spoločnou časovou osou, nočné pásma,
-víkendy, ukazovateľ so spoločnou bublinou, tlmené vykreslenie po desiatom
-dni, tmavý motív, priblíženie kolieskom aj štipcom, ťahanie, ovládanie
-klávesnicou a výchozí výrez podľa triedy zariadenia.
+**MVP je hotové** (etapy M0 – M4):
 
-Nasleduje **M4** – lokalizácia SK/CS, nastavenia, PWA a prístupnosť.
+- šesť panelov nad spoločnou časovou osou, nočné pásma, víkendy, denné
+  úhrny zrážok, čiara „teraz" a tlmené vykreslenie po desiatom dni,
+- ukazovateľ s jednou bublinou pre všetky panely,
+- priblíženie kolieskom aj štipcom, ťahanie, ovládanie klávesnicou,
+  výchozí výrez podľa triedy zariadenia,
+- svetlý a tmavý motív, slovenčina a čeština, nastavenia (jednotka vetra,
+  prepočet teploty na výšku terénu),
+- PWA: manifest, service worker, posledná predpoveď dostupná offline,
+- tabuľka hodnôt ako textová alternatíva grafu.
+
+Zostáva jediný krok mimo kód – **nasadiť na Netlify** (postup nižšie).
+Ďalej pokračuje fáza 2: výstrahy a radar.
 
 ## Vývoj
 

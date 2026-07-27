@@ -422,7 +422,27 @@ netlify.toml
 | M1    | datová vrstva ECMWF přes Open-Meteo + typy + výběr lokality + URL stav | 1,5 dne  | ✅ hotovo |
 | M2    | meteogram: sdílená osa, 6 panelů, crosshair, tmavý motiv              | 3 dny     | ✅ hotovo |
 | M3    | device-aware vrstva: zoom/pan, gesta, klávesnice, třídy zařízení (§3.6) | 1,5 dne  | ✅ hotovo |
-| M4    | SK/CS lokalizace, nastavení, PWA, přístupnost, testy, doladění        | 2 dny     | – |
+| M4    | SK/CS lokalizace, nastavení, PWA, přístupnost, testy, doladění        | 2 dny     | ✅ hotovo |
+
+**Poznámka k M4 – nastavení se promítá do dat, ne do komponent.**
+Jednotka větru i přepočet teploty na výšku terénu se aplikují jednou,
+nad odpovědí API, a teprve výsledek jde do panelů, bubliny a tabulky.
+Kdyby si každá komponenta převáděla sama, dřív nebo později ukážou dvě
+z nich pro tutéž veličinu jiné číslo.
+
+Slovník je typovaný podle slovenštiny, takže chybějící český překlad
+neprojde kompilací. Test navíc porovnává obě sady klíčů – kdyby někdo
+klíč přidal do obou souborů, ale s prázdným textem, spadne i to.
+
+**PWA má jedno omezení, se kterým je třeba počítat:** ikona je jen SVG.
+Chrome a Android ji použijí bez problému, iOS pro ikonu na plochu ale
+očekává PNG. Až bude projekt nasazený, stačí SVG vyexportovat do
+192 a 512 px a doplnit do manifestu – kód se měnit nemusí.
+
+Service worker má dvě strategie záměrně: kostra aplikace cache-first
+(soubory mají hash v názvu), předpověď network-first s odloženou kopií.
+Uložená předpověď se použije **jen** když síť selže – nikdy se
+nepodstrčí potichu jako čerstvá.
 
 **Poznámka k M3 – co je a co není ověřené.** Kolečkem řízené přiblížení,
 tažení, ťuknutí, posun klávesnicí i návrat na celý rozsah jsou ověřené
@@ -459,8 +479,8 @@ hodnoty jsou horší než prázdný panel) a nečíselnou hodnotu převést na
 `null`, ne na výjimku. Ručně psaný parser to vyjádří přímočařeji a
 nestojí nic v bundlu.
 
-**MVP celkem ~8,5 člověkodne.** Veřejný odkaz je použitelný už po M2;
-M3 a M4 jsou dolaďování téhož.
+**MVP celkem ~8,5 člověkodne – hotovo.** Zbývá jediný krok mimo kód:
+nasadit na Netlify (postup v README).
 
 ### Fáze 2 – po nasazení MVP
 

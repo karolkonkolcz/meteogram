@@ -1,60 +1,80 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ForecastHeader } from './components/ForecastHeader';
 import { ForecastTable } from './components/ForecastTable';
 import { LocationSearch } from './components/LocationSearch';
+import { SettingsDialog } from './components/SettingsDialog';
 import { Meteogram } from './components/meteogram/Meteogram';
-import { ThemeToggle } from './components/ThemeToggle';
 import { useElevation, useForecast } from './hooks/useForecast';
 import { useLocationState } from './hooks/useLocationState';
-import { useTheme } from './hooks/useTheme';
+import { useSettings } from './settings/SettingsContext';
+import { applyElevationCorrection } from './lib/correction';
+import { applyWindUnit } from './lib/units';
 import styles from './App.module.css';
 
 export function App() {
-  const { preference, setPreference } = useTheme();
+  const { settings, t } = useSettings();
   const { location, recent, setLocation } = useLocationState();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const forecast = useForecast(location);
   const elevation = useElevation(location);
+
+  /**
+   * Nastavení se promítne do dat jednou, tady. Panely, bublina i tabulka
+   * pak nemůžou ukázat různá čísla pro tutéž veličinu.
+   */
+  const prepared = useMemo(() => {
+    if (!forecast.data) return undefined;
+    const corrected = applyElevationCorrection(
+      forecast.data,
+      elevation.data,
+      settings.elevationCorrection,
+    );
+    return applyWindUnit(corrected, settings.windUnit);
+  }, [forecast.data, elevation.data, settings.elevationCorrection, settings.windUnit]);
 
   return (
     <div className={styles.app}>
       <div className={styles.topbar}>
-        <h1 className={styles.appName}>Meteogram</h1>
-        <ThemeToggle preference={preference} onChange={setPreference} />
+        <h1 className={styles.appName}>{t('app.name')}</h1>
+        <button
+          type="button"
+          className={styles.settingsButton}
+          onClick={() => setSettingsOpen(true)}
+        >
+          {t('app.settings')}
+        </button>
       </div>
 
       <ForecastHeader
         location={location}
-        forecast={forecast.data}
+        forecast={prepared}
         realElevation={elevation.data}
         onOpenSearch={() => setSearchOpen(true)}
       />
 
-      {forecast.isPending && <p className={styles.status}>Načítavam predpoveď…</p>}
+      {forecast.isPending && <p className={styles.status}>{t('app.loading')}</p>}
 
       {forecast.isError && (
         <div className={styles.error} role="alert">
-          <p>Predpoveď sa nepodarilo načítať: {forecast.error.message}</p>
+          <p>{t('app.error', { message: forecast.error.message })}</p>
           <button type="button" className={styles.retry} onClick={() => forecast.refetch()}>
-            Skúsiť znova
+            {t('app.retry')}
           </button>
         </div>
       )}
 
-      {forecast.data && (
+      {prepared && (
         <>
-          {forecast.data.missing.length > 0 && (
-            <p className={styles.status}>
-              Model pre túto lokalitu nedodal: {forecast.data.missing.join(', ')}. Príslušné
-              panely zostanú prázdne.
-            </p>
+          {prepared.missing.length > 0 && (
+            <p className={styles.status}>{t('app.missing', { list: prepared.missing.join(', ') })}</p>
           )}
 
-          <Meteogram forecast={forecast.data} />
+          <Meteogram forecast={prepared} />
 
           <details className={styles.tableToggle}>
-            <summary>Tabuľka hodnôt</summary>
-            <ForecastTable forecast={forecast.data} />
+            <summary>{t('app.table')}</summary>
+            <ForecastTable forecast={prepared} />
           </details>
         </>
       )}
@@ -70,12 +90,12 @@ export function App() {
         />
       )}
 
+      {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
+
       <footer className={styles.footer}>
-        Dáta:{' '}
         <a className={styles.link} href="https://open-meteo.com/">
-          Open-Meteo
-        </a>{' '}
-        (CC BY 4.0), model ECMWF IFS.
+          {t('app.attribution')}
+        </a>
       </footer>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { Forecast } from '../../api/openMeteo';
 import { useContainerWidth } from '../../hooks/useContainerWidth';
+import { useSettings } from '../../settings/SettingsContext';
 import { useCoarsePointer, useReducedMotion } from '../../hooks/useMediaQuery';
 import { zoomBounds } from '../../lib/zoom';
 import { useMeteogramControls } from './useMeteogramControls';
@@ -64,6 +65,8 @@ const TITLE_ROW_HEIGHT = 18;
 
 export function Meteogram({ forecast }: { forecast: Forecast }) {
   const [container, containerWidth] = useContainerWidth<HTMLDivElement>();
+  const { settings, t } = useSettings();
+  const windUnitKey = settings.windUnit === 'kmh' ? ('unit.kmh' as const) : ('unit.ms' as const);
   const coarsePointer = useCoarsePointer();
   const reducedMotion = useReducedMotion();
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
@@ -114,14 +117,23 @@ export function Meteogram({ forecast }: { forecast: Forecast }) {
       x: (index) => xTime(times[index] ?? first),
       slotWidth: (index) =>
         (stepHours(times, index) ?? stepHours(times, index - 1) ?? 1) * pxPerHour,
-      days: daySpans(times, utcOffsetSeconds, 'sk'),
+      days: daySpans(times, utcOffsetSeconds, settings.locale),
       nights: nightIntervals(forecast),
       dimX: dimFrom === null ? null : xTime(dimFrom),
       nowX: now >= first && now <= last ? xTime(now) : null,
       panelHeight: layout.panelHeight,
       titleAbove: layout.titleAbove,
     };
-  }, [forecast, first, last, totalHours, controls.pxPerHour, layout.panelHeight, layout.titleAbove]);
+  }, [
+    forecast,
+    first,
+    last,
+    totalHours,
+    controls.pxPerHour,
+    layout.panelHeight,
+    layout.titleAbove,
+    settings.locale,
+  ]);
 
   const panels = useMemo(
     () =>
@@ -204,18 +216,21 @@ export function Meteogram({ forecast }: { forecast: Forecast }) {
       ref={container}
       tabIndex={0}
       role="group"
-      aria-label="Meteogram – šípkami sa posúva ukazovateľ, klávesmi + a − sa mení priblíženie"
+      aria-label={t('chart.label')}
       onKeyDown={onKeyDown}
     >
+      {/* Čtečka obrazovky z SVG nic nevyčte – odkážeme ji na tabulku. */}
+      <p className="visually-hidden">{t('chart.textAlternative')}</p>
+
       <div className={styles.toolbar}>
         <span className={styles.hint}>
-          {coarsePointer ? 'Ťahaním sa posúva, štipcom približuje' : 'Kolieskom sa približuje, šípkami posúva ukazovateľ'}
+          {t(coarsePointer ? 'chart.hintTouch' : 'chart.hintPointer')}
         </span>
         <button
           type="button"
           className={styles.controlButton}
           onClick={() => controls.zoomByStep(-1)}
-          aria-label="Oddialiť"
+          aria-label={t('chart.zoomOut')}
         >
           −
         </button>
@@ -223,13 +238,13 @@ export function Meteogram({ forecast }: { forecast: Forecast }) {
           type="button"
           className={styles.controlButton}
           onClick={() => controls.zoomByStep(1)}
-          aria-label="Priblížiť"
+          aria-label={t('chart.zoomIn')}
         >
           +
         </button>
         {controls.isZoomed && (
           <button type="button" className={styles.controlButton} onClick={controls.resetZoom}>
-            Celé
+            {t('chart.zoomReset')}
           </button>
         )}
       </div>
@@ -238,6 +253,12 @@ export function Meteogram({ forecast }: { forecast: Forecast }) {
       <div
         className={styles.scroller}
         ref={controls.scrollerRef}
+        /*
+         * Prohlížeč dělá posuvné oblasti fokusovatelné, aby šly ovládat
+         * klávesnicí. Tady to řeší už rodič (šipky, Home/End), takže by
+         * v pořadí tabulátoru přibyla jen zastávka bez použití.
+         */
+        tabIndex={-1}
         onScroll={(event) => setScrollLeft(event.currentTarget.scrollLeft)}
       >
         {panels.map(({ def, height, y, available, axisTicks }) => (
@@ -273,15 +294,16 @@ export function Meteogram({ forecast }: { forecast: Forecast }) {
                 className={`${styles.panelTitle} ${geometry.titleAbove ? styles.panelTitleAbove : ''}`}
               >
                 <span className={styles.panelTitleInner}>
-                  {def.title} <span className={styles.panelUnit}>[{def.unit}]</span>
+                  {t(def.titleKey)}{' '}
+                  <span className={styles.panelUnit}>[{t(def.unitKey(windUnitKey))}]</span>
                   {def.legend.map((item) => (
-                    <span key={item.label} className={styles.legendItem}>
+                    <span key={item.labelKey} className={styles.legendItem}>
                       <span
                         className={styles.swatch}
                         style={{ background: `var(${item.token})` }}
                         aria-hidden="true"
                       />
-                      {item.label}
+                      {t(item.labelKey)}
                     </span>
                   ))}
                 </span>
@@ -323,7 +345,7 @@ export function Meteogram({ forecast }: { forecast: Forecast }) {
                   )}
                 </svg>
               ) : (
-                <p className={styles.missing}>Model túto veličinu nedodal.</p>
+                <p className={styles.missing}>{t('panel.missing')}</p>
               )}
             </div>
           </div>
@@ -348,6 +370,7 @@ export function Meteogram({ forecast }: { forecast: Forecast }) {
             <Tooltip
               forecast={forecast}
               index={hoverIndex}
+              windUnitKey={windUnitKey}
               x={hoverX}
               flip={flipTooltip}
               width={TOOLTIP_WIDTH}

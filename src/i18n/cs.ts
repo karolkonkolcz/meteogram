@@ -1,0 +1,93 @@
+import type { Dictionary } from './sk';
+
+/** Typ pochází ze slovenského slovníku – chybějící klíč neprojde kompilací. */
+export const cs: Dictionary = {
+  'app.name': 'Meteogram',
+  'app.loading': 'Načítám předpověď…',
+  'app.error': 'Předpověď se nepodařilo načíst: {message}',
+  'app.retry': 'Zkusit znovu',
+  'app.missing': 'Model pro tuto lokalitu nedodal: {list}. Příslušné panely zůstanou prázdné.',
+  'app.table': 'Tabulka hodnot',
+  'app.attribution': 'Data: Open-Meteo (CC BY 4.0), model ECMWF IFS.',
+  'app.settings': 'Nastavení',
+
+  'header.change': 'změnit',
+  'header.model': 'model {value} m',
+  'header.terrain': 'terén {value} m',
+  'header.elevationHigher':
+    'Modelový bod je o {value} m výš než terén, teplota proto může být systematicky posunutá.',
+  'header.elevationLower':
+    'Modelový bod je o {value} m níž než terén, teplota proto může být systematicky posunutá.',
+  'header.corrected': 'Teplota je přepočtená na výšku terénu.',
+
+  'search.title': 'Výběr lokality',
+  'search.placeholder': 'Hledat obec nebo město',
+  'search.label': 'Hledat lokalitu',
+  'search.close': 'Zavřít',
+  'search.locate': 'Moje poloha',
+  'search.locating': 'Zjišťuji polohu…',
+  'search.noGeolocation': 'Prohlížeč polohu neposkytuje.',
+  'search.geolocationFailed': 'Polohu se nepodařilo zjistit.',
+  'search.failed': 'Vyhledávání selhalo. Zkuste to znovu.',
+  'search.searching': 'Hledám…',
+  'search.empty': 'Nic se nenašlo.',
+  'search.recent': 'Naposledy zobrazené',
+
+  'panel.temperature': 'Teplota ve 2 m',
+  'panel.cloud': 'Celková oblačnost',
+  'panel.precipitation': 'Úhrn srážek',
+  'panel.pressure': 'Tlak na hladinu moře',
+  'panel.wind': 'Rychlost a nárazy větru',
+  'panel.direction': 'Směr větru',
+  'panel.missing': 'Model tuto veličinu nedodal.',
+
+  'series.temperature': 'teplota',
+  'series.apparent': 'pocitová',
+  'series.cloud': 'oblačnost',
+  'series.rain': 'déšť',
+  'series.snow': 'sníh',
+  'series.pressure': 'tlak',
+  'series.wind': 'rychlost',
+  'series.gust': 'nárazy',
+  'series.direction': 'směr',
+
+  'unit.celsius': '°C',
+  'unit.percent': '%',
+  'unit.mm': 'mm',
+  'unit.hpa': 'hPa',
+  'unit.ms': 'm/s',
+  'unit.kmh': 'km/h',
+  'unit.compass': 'světové strany',
+
+  'chart.label': 'Meteogram – šipkami se posouvá ukazatel, klávesami + a − se mění přiblížení',
+  'chart.hintPointer': 'Kolečkem se přibližuje, šipkami posouvá ukazatel',
+  'chart.hintTouch': 'Tažením se posouvá, štipcem přibližuje',
+  'chart.zoomIn': 'Přiblížit',
+  'chart.zoomOut': 'Oddálit',
+  'chart.zoomReset': 'Celé',
+  'chart.textAlternative':
+    'Graf je obrázek. Tytéž hodnoty jsou v tabulce pod ním, v sekci Tabulka hodnot.',
+
+  'table.caption': 'Hodinové hodnoty předpovědi pro zvolenou lokalitu',
+  'table.time': 'Čas',
+  'table.temperature': 'Teplota',
+  'table.apparent': 'Pocitová',
+  'table.cloud': 'Oblačnost',
+  'table.precipitation': 'Srážky',
+  'table.pressure': 'Tlak',
+  'table.wind': 'Vítr',
+  'table.gust': 'Nárazy',
+  'table.direction': 'Směr',
+
+  'settings.title': 'Nastavení',
+  'settings.language': 'Jazyk',
+  'settings.theme': 'Motiv',
+  'settings.themeAuto': 'Auto',
+  'settings.themeLight': 'Světlý',
+  'settings.themeDark': 'Tmavý',
+  'settings.windUnit': 'Jednotka větru',
+  'settings.elevation': 'Přepočítat teplotu na výšku terénu',
+  'settings.elevationHelp':
+    'Model počítá v jiné nadmořské výšce než skutečný terén. Přepočet použije gradient 0,65 °C na 100 m.',
+  'settings.close': 'Zavřít',
+};

@@ -1,21 +1,23 @@
 import type { Forecast } from '../../api/openMeteo';
+import type { MessageKey } from '../../i18n';
+import { useSettings } from '../../settings/SettingsContext';
 import { formatDayLabel, formatTime } from '../../lib/time';
 import { degreesToCompass, formatNumber } from '../../lib/units';
 import styles from './Meteogram.module.css';
 
 const ROWS: {
-  label: string;
+  labelKey: MessageKey;
   key: keyof Forecast['hourly'];
   decimals: number;
-  unit: string;
+  unitKey: MessageKey | 'wind';
   token: string;
 }[] = [
-  { label: 'Teplota', key: 'temperature_2m', decimals: 1, unit: '°C', token: '--temp' },
-  { label: 'Oblačnosť', key: 'cloud_cover', decimals: 0, unit: '%', token: '--cloud' },
-  { label: 'Zrážky', key: 'precipitation', decimals: 1, unit: 'mm', token: '--rain' },
-  { label: 'Tlak', key: 'pressure_msl', decimals: 0, unit: 'hPa', token: '--pressure' },
-  { label: 'Vietor', key: 'wind_speed_10m', decimals: 1, unit: 'm/s', token: '--wind' },
-  { label: 'Nárazy', key: 'wind_gusts_10m', decimals: 1, unit: 'm/s', token: '--wind-gust' },
+  { labelKey: 'table.temperature', key: 'temperature_2m', decimals: 1, unitKey: 'unit.celsius', token: '--temp' },
+  { labelKey: 'table.cloud', key: 'cloud_cover', decimals: 0, unitKey: 'unit.percent', token: '--cloud' },
+  { labelKey: 'table.precipitation', key: 'precipitation', decimals: 1, unitKey: 'unit.mm', token: '--rain' },
+  { labelKey: 'table.pressure', key: 'pressure_msl', decimals: 0, unitKey: 'unit.hpa', token: '--pressure' },
+  { labelKey: 'table.wind', key: 'wind_speed_10m', decimals: 1, unitKey: 'wind', token: '--wind' },
+  { labelKey: 'table.gust', key: 'wind_gusts_10m', decimals: 1, unitKey: 'wind', token: '--wind-gust' },
 ];
 
 /**
@@ -25,16 +27,19 @@ const ROWS: {
 export function Tooltip({
   forecast,
   index,
+  windUnitKey,
   x,
   flip,
   width,
 }: {
   forecast: Forecast;
   index: number;
+  windUnitKey: MessageKey;
   x: number;
   flip: boolean;
   width: number;
 }) {
+  const { settings, t } = useSettings();
   const time = forecast.times[index];
   if (time === undefined) return null;
 
@@ -48,7 +53,7 @@ export function Tooltip({
       role="status"
     >
       <p className={styles.tooltipTime}>
-        {formatDayLabel(time, offset, 'sk')} · {formatTime(time, offset)}
+        {formatDayLabel(time, offset, settings.locale)} · {formatTime(time, offset)}
       </p>
       <dl className={styles.tooltipList}>
         {ROWS.map((row) => {
@@ -62,10 +67,11 @@ export function Tooltip({
                   style={{ background: `var(${row.token})` }}
                   aria-hidden="true"
                 />
-                {row.label}
+                {t(row.labelKey)}
               </dt>
               <dd className="tabular">
-                {formatNumber(value, row.decimals)} {row.unit}
+                {formatNumber(value, row.decimals)}{' '}
+                {t(row.unitKey === 'wind' ? windUnitKey : row.unitKey)}
               </dd>
             </div>
           );
@@ -78,7 +84,7 @@ export function Tooltip({
                 style={{ background: 'var(--wind-dir)' }}
                 aria-hidden="true"
               />
-              Smer
+              {t('table.direction')}
             </dt>
             <dd className="tabular">
               {direction === null ? '—' : `${degreesToCompass(direction)} (${Math.round(direction)}°)`}

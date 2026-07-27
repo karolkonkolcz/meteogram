@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Forecast, Series } from '../../api/openMeteo';
+import type { MessageKey } from '../../i18n';
 import { extent, niceDomain, type LinearScale } from '../../lib/scales';
 import { degreesToCompass } from '../../lib/units';
 
@@ -18,9 +19,10 @@ export interface PanelContext {
 
 export interface PanelDef {
   key: string;
-  title: string;
-  unit: string;
-  legend: { label: string; token: string }[];
+  titleKey: MessageKey;
+  /** Jednotka je funkce – vítr ji mění podle nastavení (m/s vs. km/h). */
+  unitKey: (windUnitKey: MessageKey) => MessageKey;
+  legend: { labelKey: MessageKey; token: string }[];
   /** Řady, bez kterých panel nemá co kreslit. */
   requires: (keyof Forecast['hourly'])[];
   /** Volné místo nad grafem; zrážky ho potřebují na denní úhrny. */
@@ -147,11 +149,11 @@ function dailySums({ forecast, xTime, width }: PanelContext): ReactNode {
 export const PANEL_DEFS: PanelDef[] = [
   {
     key: 'temperature',
-    title: 'Teplota v 2 m',
-    unit: '°C',
+    titleKey: 'panel.temperature',
+    unitKey: () => 'unit.celsius',
     legend: [
-      { label: 'teplota', token: '--temp' },
-      { label: 'pocitová', token: '--temp-soft' },
+      { labelKey: 'series.temperature', token: '--temp' },
+      { labelKey: 'series.apparent', token: '--temp-soft' },
     ],
     requires: ['temperature_2m'],
     domain: (forecast) => {
@@ -173,9 +175,9 @@ export const PANEL_DEFS: PanelDef[] = [
   },
   {
     key: 'cloud',
-    title: 'Celková oblačnosť',
-    unit: '%',
-    legend: [{ label: 'oblačnosť', token: '--cloud' }],
+    titleKey: 'panel.cloud',
+    unitKey: () => 'unit.percent',
+    legend: [{ labelKey: 'series.cloud', token: '--cloud' }],
     requires: ['cloud_cover'],
     domain: () => [0, 100],
     render: (context) => (
@@ -191,11 +193,11 @@ export const PANEL_DEFS: PanelDef[] = [
   },
   {
     key: 'precipitation',
-    title: 'Úhrn zrážok',
-    unit: 'mm',
+    titleKey: 'panel.precipitation',
+    unitKey: () => 'unit.mm',
     legend: [
-      { label: 'dážď', token: '--rain' },
-      { label: 'sneh', token: '--snow' },
+      { labelKey: 'series.rain', token: '--rain' },
+      { labelKey: 'series.snow', token: '--snow' },
     ],
     requires: ['precipitation'],
     topPad: 32,
@@ -214,9 +216,9 @@ export const PANEL_DEFS: PanelDef[] = [
   },
   {
     key: 'pressure',
-    title: 'Tlak na hladinu mora',
-    unit: 'hPa',
-    legend: [{ label: 'tlak', token: '--pressure' }],
+    titleKey: 'panel.pressure',
+    unitKey: () => 'unit.hpa',
+    legend: [{ labelKey: 'series.pressure', token: '--pressure' }],
     requires: ['pressure_msl'],
     domain: (forecast) => {
       const span = extent(forecast.hourly.pressure_msl) ?? [1000, 1020];
@@ -228,11 +230,11 @@ export const PANEL_DEFS: PanelDef[] = [
   },
   {
     key: 'wind',
-    title: 'Rýchlosť a nárazy vetra',
-    unit: 'm/s',
+    titleKey: 'panel.wind',
+    unitKey: (windUnitKey) => windUnitKey,
     legend: [
-      { label: 'rýchlosť', token: '--wind' },
-      { label: 'nárazy', token: '--wind-gust' },
+      { labelKey: 'series.wind', token: '--wind' },
+      { labelKey: 'series.gust', token: '--wind-gust' },
     ],
     requires: ['wind_speed_10m'],
     domain: (forecast) => {
@@ -257,9 +259,9 @@ export const PANEL_DEFS: PanelDef[] = [
   },
   {
     key: 'direction',
-    title: 'Smer vetra',
-    unit: 'svetové strany',
-    legend: [{ label: 'smer', token: '--wind-dir' }],
+    titleKey: 'panel.direction',
+    unitKey: () => 'unit.compass',
+    legend: [{ labelKey: 'series.direction', token: '--wind-dir' }],
     requires: ['wind_direction_10m'],
     // Osa je 0–360°, popisky se převádějí na světové strany.
     domain: () => [0, 360],

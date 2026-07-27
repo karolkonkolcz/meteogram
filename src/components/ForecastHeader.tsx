@@ -1,6 +1,7 @@
 import type { Forecast } from '../api/openMeteo';
 import { forecastLengthHours, formatModelRun } from '../lib/time';
 import { formatCoordinates, type Location } from '../lib/location';
+import { useSettings } from '../settings/SettingsContext';
 import styles from './ForecastHeader.module.css';
 
 /**
@@ -19,6 +20,7 @@ export function ForecastHeader({
   realElevation: number | null | undefined;
   onOpenSearch: () => void;
 }) {
+  const { settings, t } = useSettings();
   const modelElevation = forecast?.modelElevation;
   const difference =
     typeof modelElevation === 'number' && typeof realElevation === 'number'
@@ -30,19 +32,23 @@ export function ForecastHeader({
       <div className={styles.identity}>
         <button type="button" className={styles.locationButton} onClick={onOpenSearch}>
           <span className={styles.name}>{location.name}</span>
-          <span className={styles.change}>zmeniť</span>
+          <span className={styles.change}>{t('header.change')}</span>
         </button>
         <p className={`${styles.meta} tabular`}>
           {formatCoordinates(location.latitude, location.longitude)}
           {typeof modelElevation === 'number' && (
-            <> · model {Math.round(modelElevation)} m</>
+            <> · {t('header.model', { value: Math.round(modelElevation) })}</>
           )}
-          {typeof realElevation === 'number' && <> · terén {Math.round(realElevation)} m</>}
+          {typeof realElevation === 'number' && (
+            <> · {t('header.terrain', { value: Math.round(realElevation) })}</>
+          )}
         </p>
         {difference !== null && Math.abs(difference) >= 50 && (
           <p className={styles.note}>
-            Modelový bod je o {Math.abs(difference)} m {difference > 0 ? 'vyššie' : 'nižšie'} než
-            terén, teplota preto môže byť systematicky posunutá.
+            {t(difference > 0 ? 'header.elevationHigher' : 'header.elevationLower', {
+              value: Math.abs(difference),
+            })}
+            {settings.elevationCorrection && ` ${t('header.corrected')}`}
           </p>
         )}
       </div>

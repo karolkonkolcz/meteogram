@@ -1,3 +1,32 @@
+import type { Forecast, Series } from '../api/openMeteo';
+
+export type WindUnit = 'ms' | 'kmh';
+
+const KMH_PER_MS = 3.6;
+
+/**
+ * Jednotka se převede jednou v datech, ne v každé komponentě zvlášť.
+ * Panel, bublina i tabulka tak nemůžou ukázat různá čísla.
+ */
+export function applyWindUnit(forecast: Forecast, unit: WindUnit): Forecast {
+  if (unit === 'ms') return forecast;
+
+  const convert = (series: Series | undefined): Series | undefined =>
+    series?.map((value) => (value === null ? null : value * KMH_PER_MS));
+
+  const speed = convert(forecast.hourly.wind_speed_10m);
+  const gusts = convert(forecast.hourly.wind_gusts_10m);
+
+  return {
+    ...forecast,
+    hourly: {
+      ...forecast.hourly,
+      ...(speed ? { wind_speed_10m: speed } : {}),
+      ...(gusts ? { wind_gusts_10m: gusts } : {}),
+    },
+  };
+}
+
 /** Světové strany jsou v SK i CS shodné, jazyk je proto nerozlišuje. */
 const COMPASS = ['S', 'SV', 'V', 'JV', 'J', 'JZ', 'Z', 'SZ'] as const;
 

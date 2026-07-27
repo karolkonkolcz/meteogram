@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { searchLocations, type GeocodingResult } from '../api/geocoding';
 import { useDebounced } from '../hooks/useDebounced';
 import { formatCoordinates, type Location } from '../lib/location';
+import { useSettings } from '../settings/SettingsContext';
 import styles from './LocationSearch.module.css';
 
 function describe(location: Location): string {
@@ -18,6 +19,7 @@ export function LocationSearch({
   onSelect: (location: Location) => void;
   onClose: () => void;
 }) {
+  const { settings, t } = useSettings();
   const [query, setQuery] = useState('');
   const [geolocationError, setGeolocationError] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
@@ -29,8 +31,8 @@ export function LocationSearch({
   }, []);
 
   const results = useQuery({
-    queryKey: ['geocoding', debouncedQuery],
-    queryFn: ({ signal }) => searchLocations(debouncedQuery, 'sk', signal),
+    queryKey: ['geocoding', debouncedQuery, settings.locale],
+    queryFn: ({ signal }) => searchLocations(debouncedQuery, settings.locale, signal),
     enabled: debouncedQuery.trim().length >= 2,
     staleTime: 5 * 60 * 1000,
   });
@@ -38,7 +40,7 @@ export function LocationSearch({
   // Poloha se zjišťuje jen na vyžádání, nikdy automaticky při otevření.
   const locate = () => {
     if (!navigator.geolocation) {
-      setGeolocationError('Prehliadač polohu neposkytuje.');
+      setGeolocationError(t('search.noGeolocation'));
       return;
     }
     setLocating(true);
@@ -54,7 +56,7 @@ export function LocationSearch({
       },
       () => {
         setLocating(false);
-        setGeolocationError('Polohu sa nepodarilo zistiť.');
+        setGeolocationError(t('search.geolocationFailed'));
       },
       { timeout: 10_000 },
     );
@@ -64,34 +66,34 @@ export function LocationSearch({
   const showRecent = debouncedQuery.trim().length < 2 && recent.length > 0;
 
   return (
-    <dialog ref={dialogRef} className={styles.dialog} onClose={onClose} aria-label="Výber lokality">
+    <dialog ref={dialogRef} className={styles.dialog} onClose={onClose} aria-label={t('search.title')}>
       <div className={styles.header}>
         <input
           className={styles.input}
           type="search"
           value={query}
           autoFocus
-          placeholder="Hľadať obec alebo mesto"
-          aria-label="Hľadať lokalitu"
+          placeholder={t('search.placeholder')}
+          aria-label={t('search.label')}
           onChange={(event) => setQuery(event.target.value)}
         />
         <button type="button" className={styles.close} onClick={() => dialogRef.current?.close()}>
-          Zavrieť
+          {t('search.close')}
         </button>
       </div>
 
       <button type="button" className={styles.locate} onClick={locate} disabled={locating}>
-        {locating ? 'Zisťujem polohu…' : 'Moja poloha'}
+        {t(locating ? 'search.locating' : 'search.locate')}
       </button>
       {geolocationError && <p className={styles.error}>{geolocationError}</p>}
 
-      {results.isError && <p className={styles.error}>Vyhľadávanie zlyhalo. Skúste to znova.</p>}
-      {results.isFetching && <p className={styles.hint}>Hľadám…</p>}
+      {results.isError && <p className={styles.error}>{t('search.failed')}</p>}
+      {results.isFetching && <p className={styles.hint}>{t('search.searching')}</p>}
       {!results.isFetching && debouncedQuery.trim().length >= 2 && shown.length === 0 && (
-        <p className={styles.hint}>Nič sa nenašlo.</p>
+        <p className={styles.hint}>{t('search.empty')}</p>
       )}
 
-      {showRecent && <p className={styles.hint}>Naposledy zobrazené</p>}
+      {showRecent && <p className={styles.hint}>{t('search.recent')}</p>}
       <ul className={styles.results}>
         {(showRecent ? recent : shown).map((location) => (
           <li key={`${location.latitude},${location.longitude}`}>

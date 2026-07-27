@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Meteogram">
+  <rect width="512" height="512" rx="96" fill="#1a1a19"/>
+  <g fill="none" stroke-linecap="round" stroke-width="26">
+    <path stroke="#d95926" d="M64 300c32-96 64-96 96 0s64 96 96 0 64-96 96 0 64 96 96 0"/>
+    <path stroke="#3987e5" d="M96 400v40M176 392v48M256 404v36M336 392v48M416 400v40"/>
+  </g>
+</svg>

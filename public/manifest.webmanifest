@@ -1,0 +1,16 @@
+{
+  "name": "Meteogram",
+  "short_name": "Meteogram",
+  "description": "Interaktívny meteogram na 16 dní z modelu ECMWF.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fcfcfb",
+  "theme_color": "#1a1a19",
+  "lang": "sk",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

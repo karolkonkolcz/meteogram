@@ -11,13 +11,13 @@ sú naplánované ako fáza 2.
 
 ## Stav
 
-Hotové etapy **M0 – kostra** (build, design tokens, motívy, CI, konfigurácia
-nasadenia) a **M1 – dáta** (predpoveď ECMWF z Open-Meteo, výber lokality,
-zdieľateľná URL, tabuľka hodnôt).
+Hotové etapy **M0 – kostra**, **M1 – dáta** a **M2 – meteogram**:
+šesť panelov nad spoločnou časovou osou, nočné pásma, víkendy, ukazovateľ
+so spoločnou bublinou pre všetky panely, tlmené vykreslenie po desiatom dni
+a tmavý motív. Tabuľka hodnôt zostáva ako textová alternatíva grafu.
 
-Panely meteogramu sú zatiaľ prázdne miesta – vykreslí ich etapa M2.
-Do tej doby sú hodnoty v tabuľke pod nimi; tá zostane aj neskôr ako
-textová alternatíva grafu.
+Nasleduje **M3** – priblíženie, gestá, ovládanie klávesnicou a doladenie
+správania podľa triedy zariadenia.
 
 ## Vývoj
 

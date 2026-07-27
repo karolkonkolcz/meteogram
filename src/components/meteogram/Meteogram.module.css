@@ -1,0 +1,180 @@
+.meteogram {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/*
+ * Jediný vodorovný posuvník pro celý meteogram – panely tak nemůžou
+ * rozejít společnou časovou osu. Osa hodnot zůstává přilepená vlevo.
+ */
+.scroller {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+}
+
+.row {
+  display: flex;
+  width: max-content;
+}
+
+.axis {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  flex: none;
+  background: var(--surface);
+  border-right: 1px solid var(--grid);
+}
+
+.axisLabel {
+  position: absolute;
+  right: var(--space-1);
+  transform: translateY(-50%);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.plot {
+  position: relative;
+  flex: none;
+}
+
+/* Popisek vlevo nahoře v ploše panelu, ne červený nadpis nad ním (docs §3.0). */
+.panelTitle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--ink-secondary);
+  pointer-events: none;
+}
+
+/* Nad plochou grafu, ne přes ni – jinak by na telefonu zakryl křivku. */
+.panelTitleAbove {
+  position: relative;
+  display: block;
+  height: 18px;
+  line-height: 18px;
+}
+
+/*
+ * Popisek se lepí k levému okraji výřezu: při posunu na šestnáctý den
+ * musí být pořád vidět, čí panel to vlastně je.
+ */
+.panelTitleInner {
+  position: sticky;
+  left: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-right: var(--space-2);
+  background: linear-gradient(to right, var(--surface) 85%, transparent);
+}
+
+.panelUnit {
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+
+.swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.svg {
+  display: block;
+}
+
+.missing {
+  margin: 0;
+  padding: var(--space-4) var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
+}
+
+.crosshair,
+.now {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  pointer-events: none;
+}
+
+.crosshair {
+  background: var(--ink);
+  opacity: 0.55;
+}
+
+.now {
+  background: var(--now-line);
+  opacity: 0.9;
+  box-shadow: 0 0 0 1px var(--surface);
+}
+
+.tooltip {
+  position: absolute;
+  top: var(--space-2);
+  margin-left: 12px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 18%);
+  pointer-events: none;
+}
+
+.tooltipTime {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.tooltipList {
+  margin: 0;
+  font-size: var(--text-xs);
+}
+
+.tooltipRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.tooltipRow dt {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--ink-secondary);
+}
+
+.tooltipRow dd {
+  margin: 0;
+  color: var(--ink);
+}

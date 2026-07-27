@@ -2,55 +2,12 @@ import { useState } from 'react';
 import { ForecastHeader } from './components/ForecastHeader';
 import { ForecastTable } from './components/ForecastTable';
 import { LocationSearch } from './components/LocationSearch';
-import { PanelSkeleton, type PanelSeries } from './components/PanelSkeleton';
+import { Meteogram } from './components/meteogram/Meteogram';
 import { ThemeToggle } from './components/ThemeToggle';
 import { useElevation, useForecast } from './hooks/useForecast';
 import { useLocationState } from './hooks/useLocationState';
 import { useTheme } from './hooks/useTheme';
 import styles from './App.module.css';
-
-/** Poradie panelov je prevzaté z predlohy SHMÚ a v ďalších etapách sa nemení. */
-const PANELS: { title: string; unit: string; series: PanelSeries[] }[] = [
-  {
-    title: 'Teplota v 2 m nad povrchom',
-    unit: '°C',
-    series: [
-      { label: 'teplota', token: '--temp' },
-      { label: 'pocitová', token: '--temp-soft' },
-    ],
-  },
-  {
-    title: 'Celková oblačnosť',
-    unit: '%',
-    series: [{ label: 'oblačnosť', token: '--cloud' }],
-  },
-  {
-    title: 'Úhrn zrážok',
-    unit: 'mm',
-    series: [
-      { label: 'dážď', token: '--rain' },
-      { label: 'sneh', token: '--snow' },
-    ],
-  },
-  {
-    title: 'Tlak redukovaný na hladinu mora',
-    unit: 'hPa',
-    series: [{ label: 'tlak', token: '--pressure' }],
-  },
-  {
-    title: 'Rýchlosť a nárazy vetra v 10 m',
-    unit: 'm/s',
-    series: [
-      { label: 'rýchlosť', token: '--wind' },
-      { label: 'nárazy', token: '--wind-gust' },
-    ],
-  },
-  {
-    title: 'Smer vetra v 10 m',
-    unit: 'svetové strany',
-    series: [{ label: 'smer', token: '--wind-dir' }],
-  },
-];
 
 export function App() {
   const { preference, setPreference } = useTheme();
@@ -93,16 +50,12 @@ export function App() {
             </p>
           )}
 
-          <section className={styles.panels} aria-label="Meteogram">
-            {PANELS.map((panel) => (
-              <PanelSkeleton key={panel.title} {...panel} />
-            ))}
-          </section>
-          <p className={styles.status}>
-            Panely vykreslí etapa M2. Dovtedy sú hodnoty v tabuľke nižšie.
-          </p>
+          <Meteogram forecast={forecast.data} />
 
-          <ForecastTable forecast={forecast.data} />
+          <details className={styles.tableToggle}>
+            <summary>Tabuľka hodnôt</summary>
+            <ForecastTable forecast={forecast.data} />
+          </details>
         </>
       )}
 

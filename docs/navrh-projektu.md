@@ -400,9 +400,23 @@ netlify.toml
 | ----- | --------------------------------------------------------------------- | --------- | ---- |
 | M0    | skeleton, Vite+TS, `netlify.toml`, design tokens, první deploy, CI    | 0,5 dne   | ✅ hotovo |
 | M1    | datová vrstva ECMWF přes Open-Meteo + typy + výběr lokality + URL stav | 1,5 dne  | ✅ hotovo |
-| M2    | meteogram: sdílená osa, 6 panelů, crosshair, tmavý motiv              | 3 dny     | – |
+| M2    | meteogram: sdílená osa, 6 panelů, crosshair, tmavý motiv              | 3 dny     | ✅ hotovo |
 | M3    | device-aware vrstva: zoom/pan, gesta, klávesnice, třídy zařízení (§3.6) | 1,5 dne  | – |
 | M4    | SK/CS lokalizace, nastavení, PWA, přístupnost, testy, doladění        | 2 dny     | – |
+
+**Poznámka k M2 – bez `d3-scale` a `d3-shape`.** Ze stejného důvodu jako
+u Zodu: meteogram z d3 potřeboval jen lineární mapování, hezké dílky a
+skládání cest `M…L…`. To je zhruba osmdesát řádků v `lib/scales.ts`,
+otestovaných včetně degenerovaného oboru a záporných teplot. Dvě
+závislosti navíc by za to nestály – a vlastní kód umí to, co d3 ne:
+**přerušit čáru na chybějící hodnotě** místo spojení přes mezeru, což je
+u nepravidelného kroku IFS podstatné.
+
+Jednu věc M2 vyřešil jinak, než návrh čekal: **jeden vodorovný posuvník
+pro celý graf**. Šest samostatných posuvníků by umožnilo rozejít panely,
+a tím zrušit hlavní vlastnost meteogramu – společnou časovou osu. Osa
+hodnot i popisky panelů proto zůstávají „přilepené" vlevo (`sticky`),
+zatímco plocha se posouvá pod nimi.
 
 **Poznámka k M1 – parsování bez Zodu.** Návrh původně počítal se Zod
 schématy. Při psaní se ukázalo, že potřebná pravidla nejsou validace
